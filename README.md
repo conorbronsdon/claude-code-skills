@@ -62,7 +62,7 @@ These skills follow the [agentskills.io](https://agentskills.io) format and work
 
 ## Related
 
-- **[AI Tools for Creators](https://github.com/conorbronsdon/ai-tools-for-creators)** — Curated collection of skills, MCP servers, and workflow tools
+- **[AI Tools for Creators](https://github.com/conorbronsdon/ai-tools-for-creators)** — Collection of skills, MCP servers, and workflow tools
 - **[avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing)** — Catch and fix AI writing patterns (90+ checks)
 - **[AI Learning Resources](https://github.com/conorbronsdon/ai-learning-resources)** — Curated learning path from "what is AI?" to building with Claude Code
 
