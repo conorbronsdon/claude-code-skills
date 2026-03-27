@@ -4,7 +4,7 @@
 
 Production-tested skills for Claude Code. Drop-in markdown files that teach Claude specific workflows.
 
-[![GitHub stars](https://img.shields.io/github/stars/conorbronsdon/claude-code-skills?style=flat-square)](https://github.com/conorbronsdon/claude-code-skills/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/conorbronsdon/claude-code-skills?style=social)](https://github.com/conorbronsdon/claude-code-skills/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Conor_Bronsdon-blue?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/conorbronsdon/)
