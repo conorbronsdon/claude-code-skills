@@ -4,6 +4,39 @@ Production-tested skills for Claude Code. Each skill is a drop-in markdown file 
 
 These are patterns I built for my own daily work and generalized for anyone to use. They work with Claude Code out of the box and follow the [agentskills.io](https://agentskills.io) standard where applicable.
 
+## At a Glance
+
+| Skill | Commands | What it solves |
+|-------|----------|---------------|
+| [Session Management](session-management/) | `/start`, `/end`, `/update`, `/today` | Claude Code has no memory between sessions — this adds it |
+| [Reconcile](reconcile/) | `/reconcile` | Parallel sessions cause state drift — this detects it |
+| [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
+| [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
+
+## Quick Start
+
+Prerequisites: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed, a project with a `.claude/commands/` directory.
+
+```bash
+# 1. Copy a skill into your project
+cp -r session-management/SKILL.md your-project/skills/session-management/SKILL.md
+
+# 2. Create a command routing file
+cat > your-project/.claude/commands/start.md << 'EOF'
+---
+name: start
+description: Start a session — load state and get a briefing
+---
+
+Load and follow the instructions in `skills/session-management/SKILL.md`, section "/start — Begin Session".
+EOF
+
+# 3. Use it
+# Type /start in Claude Code
+```
+
+Repeat for each skill/command you want. See each skill's SKILL.md for the full setup details.
+
 ## Skills
 
 ### [Session Management](session-management/)
