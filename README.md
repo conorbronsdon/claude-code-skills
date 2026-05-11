@@ -21,9 +21,11 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | Skill | Commands | What it solves |
 |-------|----------|---------------|
 | [Session Management](session-management/) | `/start`, `/end`, `/update`, `/today` | Claude Code has no memory between sessions — this adds it |
+| [Code Review](code-review/) | `/code-review` | Single-pass reviews miss architectural P0s — this orchestrates Copilot + parallel subagents |
 | [Reconcile](reconcile/) | `/reconcile` | Parallel sessions cause state drift — this detects it |
 | [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
 | [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
+| [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 90+ checks across vocabulary, structure, rhythm |
 
 ## Quick Start
 
@@ -61,6 +63,12 @@ A system of four commands (`/start`, `/end`, `/update`, `/today`) that give Clau
 - **`/today`** — Morning heartbeat: staleness check, deadlines, memory curation
 
 Includes setup guide with the required file structure and minimal starter templates.
+
+### [Code Review](code-review/)
+
+Multi-agent orchestrator for code-PR review. Spawns Copilot plus parallel subagents (adversarial, operational, reference-comparison) sized to PR risk, with stale-finding triage and a hard 2-round iteration cap. Built because line-level review consistently misses architectural failures (Vercel `maxDuration`, persistent-replay vectors, missing retry budgets) that only surface when a reviewer is asked the right operational question.
+
+Use for: high-stakes PRs touching auth, payment, crypto, deploy configs, or external SDK integrations. Skip for typos and trivial changes.
 
 ### [Reconcile](reconcile/)
 
