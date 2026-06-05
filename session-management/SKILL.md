@@ -96,10 +96,12 @@ Key decisions with date, context, and rationale.
    - `state/blockers.md` — things waiting on dependencies
    - `sessions/{TODAY}.md` — if it exists, you're resuming today
 
-4. **Check state freshness.** Flag files that haven't been updated recently:
+4. **Health checks.** Flag anything that needs attention; skip silently if all clean:
    - `current.md` >3 days stale — flag it
    - `weekly-priorities.md` >5 days — flag it
    - `blockers.md` >7 days — flag it
+   - **Inbox:** if you keep a drop-zone (e.g. `inbox/`) and it holds files, note the count and suggest triaging them
+   - **Overdue items:** scan your task file (e.g. `TODO.md`) for unchecked items with a date that has passed
 
 5. **Give a briefing.** Keep it short:
    - Date and day of week
