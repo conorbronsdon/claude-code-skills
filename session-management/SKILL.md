@@ -12,7 +12,7 @@ A system of four commands that give Claude Code a memory across sessions. Instea
 Claude Code conversations are ephemeral — close the terminal and the context is gone. These skills solve that by:
 - **`/start`** loads your project state so Claude knows where you left off
 - **`/update`** saves progress mid-session without closing
-- **`/end`** captures everything from the session before you close
+- **`/end`** captures the session and proposes durable memory updates before you close
 - **`/today`** runs a morning check-in that catches staleness, surfaces deadlines, and proposes memory updates
 
 The system compounds over time. Session logs become an episodic record. State files stay fresh. Decisions are logged. Nothing falls through the cracks.
@@ -70,7 +70,7 @@ Key decisions with date, context, and rationale.
 | Command | What it does |
 |---------|-------------|
 | `/start` | Load state, check what changed, give a briefing |
-| `/end` | Log the session, update state, check for uncommitted work |
+| `/end` | Log the session, update state, propose memory updates, check for uncommitted work |
 | `/update` | Mid-session checkpoint (quick save) |
 | `/today` | Morning heartbeat — staleness check, deadlines, memory curation |
 ```
@@ -173,12 +173,26 @@ Key decisions with date, context, and rationale.
    ```
    Only log decisions that future sessions need to know about.
 
-5. **Git safety check (do not skip).** Run `git status` and check for uncommitted or unpushed work:
+5. **Propose auto-memory updates.** Beyond state files, scan the session for durable patterns worth preserving across *every* conversation in this project. Claude Code auto-loads `MEMORY.md` from the project's memory dir (`~/.claude/projects/<encoded-cwd>/memory/`, where `<encoded-cwd>` is the project path with `/`, `\`, and `:` replaced by `-`) at the start of each conversation, so anything saved there compounds.
+
+   Propose 0–2 additions. Good candidates: environment quirks or tool behaviors confirmed this session, workflow preferences the user stated ("always X", "never Y"), debugging fixes that will recur, stable facts about projects or people. Skip: today's work (that's the session log), anything already in `CLAUDE.md` or state files, and unverified single-observation conclusions.
+
+   **Friction-point check:** before proposing, ask — *was there a friction point this session that a memory entry would have prevented?* A tool you had to re-learn, an error you'd hit before, a convention you had to re-infer. If yes, write the entry; repeating a mistake is a system failure, so turn it into a durable rule.
+
+   Present proposals inline and wait for approval — never write to memory automatically:
+   ```
+   MEMORY PROPOSALS:
+   - [proposed addition]
+   (Reply "save" to apply, or skip)
+   ```
+   If nothing qualifies, skip silently.
+
+6. **Git safety check (do not skip).** Run `git status` and check for uncommitted or unpushed work:
    - Uncommitted changes? Show the files and ask whether to commit.
    - Unpushed commits? Show the count and ask whether to push.
    - Clean and pushed? Skip silently.
 
-6. **Confirm.** Two-line summary: what was logged, and the top open thread or next action.
+7. **Confirm.** Two-line summary: what was logged, and the top open thread or next action. If memory proposals are awaiting a save/skip reply, note that.
 
 ---
 
@@ -254,7 +268,7 @@ A daily check-in that catches staleness, surfaces deadlines, and proposes update
 ## Design Principles
 
 - **Fast.** Under 60 seconds. If it's slow, it won't get used.
-- **Propose, don't act.** State updates from `/end` are presented for confirmation. Memory updates from `/today` require explicit approval. Never silently edit state files during heartbeat.
+- **Propose, don't act.** State and auto-memory updates from `/end` are presented for confirmation. Memory updates from `/today` require explicit approval. Never silently edit state files during heartbeat, or write to auto-memory without a "save".
 - **Skip what's clean.** If everything is fresh and no deadlines are near, say so in one line.
 - **Compound over time.** Session logs and heartbeat logs become an episodic record. Over weeks, they show patterns.
 - **Graceful degradation.** If state files don't exist yet, create them. If a session closes without `/end`, `/today` catches the gaps. Nothing is catastrophic.

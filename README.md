@@ -58,7 +58,7 @@ Repeat for each skill/command you want. See each skill's SKILL.md for the full s
 A system of four commands (`/start`, `/end`, `/update`, `/today`) that give Claude Code memory across conversations. Maintains state files so every session picks up where the last one left off.
 
 - **`/start`** — Load project state, check what changed, get a briefing
-- **`/end`** — Auto-extract session summary, update state, check for uncommitted work
+- **`/end`** — Auto-extract session summary, update state, propose auto-memory updates, check for uncommitted work
 - **`/update`** — Mid-session checkpoint (quick save)
 - **`/today`** — Morning heartbeat: staleness check, deadlines, memory curation
 
