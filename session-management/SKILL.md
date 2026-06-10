@@ -26,7 +26,8 @@ Create these files in your project root (or wherever makes sense for your workfl
 ```
 state/
   current.md          # Active priorities, open threads, recent context
-  decisions.md        # Decision log (date, decision, rationale)
+  current-log.md      # History of past "Last Updated" lines, newest first (auto-created)
+  decisions.md        # Decision log (date, decision, rationale, rejected alternatives)
   weekly-priorities.md # What matters this week
   blockers.md         # Things waiting on external dependencies
   heartbeat-log.md    # Record of /today check-ins (auto-created)
@@ -57,11 +58,13 @@ Last updated: [date]
 ```markdown
 # Decision Log
 
-Key decisions with date, context, and rationale.
+Key decisions with date, context, rationale, and what was considered but not chosen.
 
-| Date | Decision | Context / Rationale |
-|------|----------|---------------------|
+| Date | Decision | Context / Rationale | Rejected Alternatives |
+|------|----------|---------------------|-----------------------|
 ```
+
+The last column records what else was on the table and why it lost. It is the failed-hypothesis log: a future session can audit the reasoning, not just the outcome, and avoid re-litigating a path that was already ruled out. Leave it blank when there was only one obvious option.
 
 ### Add to your CLAUDE.md
 
@@ -141,6 +144,7 @@ Key decisions with date, context, and rationale.
 1. **Auto-extract session summary.** Scan the full conversation and extract:
    - **Topics covered** — what was worked on
    - **Decisions made** — anything concluded or chosen, with rationale
+   - **Rejected alternatives:** for each meaningful decision, what else was considered and why it lost. If a bug was fixed, note the wrong theory that was tried first. If an approach changed mid-session, capture the pivot. This is the failed-hypothesis record that keeps a future session from repeating the same wrong starting point.
    - **State changes** — priorities that shifted, threads that opened or closed
    - **Open threads** — unfinished items or things waiting on someone
    - **Next actions** — what needs to happen next session
@@ -165,15 +169,23 @@ Key decisions with date, context, and rationale.
    ```
 
 3. **Update state files:**
-   - **Always update `current.md`**: Add new threads, remove completed items, update timestamps on touched items. Update "Last Updated" date.
+   - **Always update `current.md`**: Add new threads, remove completed items, update timestamps on touched items.
+   - **Roll the `Last Updated` line through `current-log.md` (chain protocol).** Keep exactly one `**Last Updated:**` line at the top of `current.md`, the newest one. Never stack extra `**Last Updated:**` lines, and never extend one line with a "previous-entry" chain (that pattern breaks the Read tool, breaks grep, and turns parallel-session merges into spliced single-line conflicts). Instead:
+     1. Read the existing `**Last Updated:**` line from `current.md`.
+     2. Prepend it as its own line at the top of `state/current-log.md`, directly under the file header, newest first. Create the file with a `# current.md update log` header if it does not exist.
+     3. Replace the `**Last Updated:**` line in `current.md` with today's new entry.
+
+     One entry per line keeps history append-only and merge conflicts line-based: two parallel sessions both prepending produce a trivial both-lines merge instead of one giant clobbered line.
    - **Update `blockers.md` if needed**: Add new dependencies, move resolved blockers to "Recently Unblocked."
    - **Update `weekly-priorities.md` if needed**: Check off completed items. Only touch if meaningful progress was made.
 
 4. **Update decision log.** If decisions were made, append to `decisions.md`:
    ```markdown
-   | {TODAY} | {decision} | {context / rationale} |
+   | {TODAY} | {decision} | {context / rationale} | {rejected alternatives} |
    ```
-   Only log decisions that future sessions need to know about.
+   Only log decisions that future sessions need to know about: source-of-truth changes, strategy pivots, scope calls, tool or process choices. Skip trivial ones.
+
+   Fill the **rejected alternatives** column when there was a real branch point: what else was considered, and why it lost. Leave it blank for decisions with only one obvious option. Capturing the non-chosen paths lets a future session audit the reasoning, not just the outcome.
 
 5. **Propose auto-memory updates.** Beyond state files, scan the session for durable patterns worth preserving across *every* conversation in this project. Claude Code auto-loads `MEMORY.md` from the project's memory dir (`~/.claude/projects/<encoded-cwd>/memory/`, where `<encoded-cwd>` is the project path with `/`, `\`, and `:` replaced by `-`) at the start of each conversation, so anything saved there compounds.
 
@@ -189,12 +201,17 @@ Key decisions with date, context, and rationale.
    ```
    If nothing qualifies, skip silently.
 
-6. **Git safety check (do not skip).** Run `git status` and check for uncommitted or unpushed work:
+6. **Quick drift check (if parallel sessions ran).** Run `git log --oneline --all --since="6 hours ago"` to catch commits from other sessions working in parallel.
+   - If any of those commits touched files this session also edited, flag the potential conflict: "Parallel session also edited [file], check for conflicts." Wait for the user before fixing anything.
+   - If no parallel commits are found, skip silently. Do not mention this step.
+   - This is a fast spot-check, not a full reconcile.
+
+7. **Git safety check (do not skip).** Run `git status` and check for uncommitted or unpushed work:
    - Uncommitted changes? Show the files and ask whether to commit.
    - Unpushed commits? Show the count and ask whether to push.
    - Clean and pushed? Skip silently.
 
-7. **Confirm.** Two-line summary: what was logged, and the top open thread or next action. If memory proposals are awaiting a save/skip reply, note that.
+8. **Confirm.** Two-line summary: what was logged, and the top open thread or next action. If memory proposals are awaiting a save/skip reply, note that.
 
 ---
 
