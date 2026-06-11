@@ -28,7 +28,7 @@ See [SKILL.md](SKILL.md) for full instructions and [patterns/research-prompts.md
 - Strongest signal for: verified production use at Acme within 4 months of launch.
 - Strongest signal against: no moat found beyond execution speed; incumbents are
   one release away.
-- Fair valuation range depends on: real revenue vs design-partner credits, and
+- Valuation-moving unknowns: real revenue vs design-partner credits, and
   whether the data flywheel claim survives the founder call.
 - Decision is yours. This memo is evidence, not advice.
 ```

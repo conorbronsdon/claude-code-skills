@@ -4,9 +4,9 @@ Three paste-ready templates. Fill the bracketed slots, then spawn all three in a
 
 Every prompt:
 - Names the company, website, and today's date.
-- Repeats the evidence rules. Subagents hallucinate too; the rules travel with the prompt.
+- Carries the evidence rules. Subagents hallucinate too; the rules travel with the prompt. The shared block below is the compact form of SKILL.md's six rules and is the exact text that travels: paste it unmodified into every prompt.
 - Caps the report at ~600 words including citations.
-- Forbids passing deck contents into searches. If the orchestrator has deck notes, it passes derived search targets only ("verify whether they claim enterprise customers"), never the deck text.
+- Forbids passing deck contents into searches. If the orchestrator has deck notes, it passes derived search targets only ("verify whether they claim enterprise customers"), never the deck text. Litmus test: a derived target contains nothing that someone who never saw the deck could not have written.
 
 Shared evidence block to paste into every prompt:
 
@@ -14,10 +14,14 @@ Shared evidence block to paste into every prompt:
 EVIDENCE RULES (non-negotiable):
 1. Every factual claim needs a URL you actually fetched this session. No URL, no claim.
 2. If you cannot verify something, write "could not verify: [claim]". That is a useful finding.
-3. Date every fact with the source page's date, or mark it "undated".
+3. Date every fact with the source page's date, or mark it "undated". For funding facts,
+   prefer the primary announcement over aggregator databases; they lag and conflate rounds.
 4. Label each item "verified" (independent source) or "claimed" (company's own materials).
+   Press that only quotes founders or investors counts as "claimed".
 5. Never state a number (TAM, ARR, headcount, valuation) that does not appear in a fetched source.
-6. Never put any text I gave you from private materials into a search query.
+6. Never put any text I gave you from private materials into a search query or any other
+   external tool. The company's name and website are fine; their numbers, customers, and
+   roadmap are not.
 Report cap: ~600 words including citations. Findings first, then "could not verify" list.
 ```
 
