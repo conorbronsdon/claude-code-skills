@@ -19,10 +19,15 @@ company, or known work]).
 
 Use the Podcast Index MCP tools:
 1. search_by_person with q: "[NAME]", max: 50, fulltext: true.
-2. For each plausible hit, confirm it is THIS person (anchor fact appears in
-   the episode title/description or the show's subject area) and that they are
-   a GUEST, not the host and not merely mentioned.
-3. For each confirmed show, call podcast_by_feed_id with the feedId to get
+2. For each plausible hit, confirm it is THIS person: the anchor fact must
+   appear in the episode title or description. A matching subject area alone
+   is not confirmation; that hit goes in the ambiguous list.
+3. Confirm they are a GUEST, not the host and not merely mentioned. Guest
+   markers: "with [NAME]", "featuring", "[NAME] on ...", "joins us", "our
+   guest". Host marker: [NAME] across most of the feed's episodes (spot-check
+   with episodes_by_feed_id) or in the feed author field; exclude. Mention-only
+   (the episode's guest is someone else): exclude.
+4. For each confirmed show, call podcast_by_feed_id with the feedId to get
    episode count and categories as a rough audience signal.
 
 datePublished values are Unix timestamps. Convert to YYYY-MM-DD.
@@ -78,10 +83,12 @@ You are researching [NAME] ([ANCHOR FACT]) through their own channels.
 
 Check, fetching each page you cite:
 1. Their personal or company site: press, speaking, media, or about page.
-2. Their recent writing: blog, newsletter, papers. List the 3-5 most recent
-   topics with dates.
+2. Their recent work, roughly the last 12 months: blog and newsletter posts,
+   papers (arXiv/Scholar), conference talks (event sites, YouTube), product
+   launches or changelogs. List the 3-5 most recent items with dates.
 3. Public social posts if reachable (search "[NAME]" site:linkedin.com
-   podcast, and their X profile) for appearance announcements.
+   podcast, and their X profile) for appearance announcements and substantive
+   threads about their work.
 
 Return (cap ~400 words + table):
 1. Table of self-announced podcast appearances: date | show | episode | link.
