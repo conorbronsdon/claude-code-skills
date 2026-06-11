@@ -23,6 +23,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [Session Management](session-management/) | `/start`, `/end`, `/update`, `/today` | Claude Code has no memory between sessions — this adds it |
 | [Code Review](code-review/) | `/code-review` | Single-pass reviews miss architectural P0s — this orchestrates Copilot + parallel subagents |
 | [Reconcile](reconcile/) | `/reconcile` | Parallel sessions cause state drift — this detects it |
+| [SSOT Check](ssot-check/) | `/ssot-check` | Facts hand-copied across docs drift — this tracks the canonical value and audits every copy |
 | [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
 | [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
 | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 90+ checks across vocabulary, structure, rhythm |
@@ -75,6 +76,12 @@ Use for: high-stakes PRs touching auth, payment, crypto, deploy configs, or exte
 Tripwire check for multi-session drift. Scans recent commits, state files, and cross-references for inconsistencies caused by parallel Claude Code sessions.
 
 Use after merging worktree branches, after crashes, or whenever something feels off.
+
+### [SSOT Check](ssot-check/)
+
+Drift auditor for facts that are canonical in one file but hand-copied into others (episode counts, prices, subscriber numbers, versions). Discover mode scans the repo for drift-prone values and proposes a `.ssot.yaml` manifest mapping each fact to its canonical file and known copies, with regex capture groups so values can be extracted and compared. Check mode reads the manifest, verifies every copy against the canonical value, and reports IN SYNC / DRIFTED / CANONICAL MOVED with `file:line` evidence and proposed diffs. Never auto-applies fixes. Handles cross-repo copies (a landing page in a sibling clone) and ends with a one-line summary built for a pre-commit habit.
+
+Use before commits that touch docs, after updating any canonical number, or on any repo with a "grep for other files with this number" rule that people forget to follow.
 
 ### [Recover](recover/)
 
