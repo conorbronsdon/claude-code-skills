@@ -4,4 +4,4 @@ Single-source-of-truth drift auditor for documentation-heavy repos. Facts like a
 
 Two modes: **discover** (first run, proposes the manifest) and **check** (every run after, verifies copies and emits a one-line exit summary suitable for a pre-commit habit).
 
-See [SKILL.md](SKILL.md) for full instructions and the manifest schema.
+See [SKILL.md](SKILL.md) for full instructions and the manifest schema. A worked example from a real discover run — the proposed manifest plus the live drift it surfaced — is in [examples/cot-production-discovery/](examples/cot-production-discovery/).
