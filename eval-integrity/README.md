@@ -1,6 +1,6 @@
 # eval-integrity
 
-Audit an LLM evaluation or benchmark repo for the integrity practices that make a published score mean what it appears to mean. Run with `/eval-integrity` pointed at a benchmark repo. It greps the repo for evidence across seven dimensions, spawns one auditor subagent per dimension in parallel, and emits a scored report: per-dimension PRESENT / PARTIAL / ABSENT, with `file:line` evidence, a severity tag, and a concrete fix for every gap.
+Audit an LLM evaluation or benchmark repo for the integrity practices that make a published score mean what it appears to mean. Run with `/eval-integrity` pointed at a benchmark repo. It greps the repo for evidence across seven dimensions, spawns one auditor subagent per dimension in parallel (or runs the briefs inline sequentially when no subagent tool exists), and emits a scored report: per-dimension PRESENT / PARTIAL / ABSENT, with `file:line` evidence, a severity tag, and a concrete fix for every gap.
 
 The seven dimensions:
 
@@ -10,7 +10,7 @@ The seven dimensions:
 4. **Judge validity** — judge pinned to the model actually served; chance-corrected multi-judge agreement; same-lab, length-bias, and halo controls.
 5. **Statistical honesty** — confidence intervals on headline numbers; micro vs macro stated; pass@k vs pass^k disambiguated; seeds fixed; multiple-comparison risk acknowledged.
 6. **Reproducibility** — deterministic re-run path, cost caps / resume for expensive runs, pinned environment.
-7. **Leaderboard exclusions** — null-agent baselines, holdout rows, and non-default configs kept out of public aggregates, enforced by tripwire tests rather than intent.
+7. **Leaderboard exclusions & publish mechanics** — null-agent baselines, holdout rows, and non-default configs kept out of public aggregates, enforced by tripwire tests rather than intent; the publish step's paths actually commit, and every surface the docs promise is one the pipeline writes.
 
 Each gap is rated **INVALIDATING** (a reviewer can throw out the published number) or **HARDENING** (weakens credibility, doesn't invalidate). The report leads with the invalidating gaps.
 

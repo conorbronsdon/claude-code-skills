@@ -8,6 +8,8 @@ Every brief:
 - States the severity rule for its dimension (which gaps are INVALIDATING vs HARDENING).
 - Returns the same report contract: rating + evidence (`file:line` or "searched X,Y,Z — nothing") + concrete fix.
 
+A warning on the grep patterns: they were derived from one benchmark (cot-bench) and carry its vocabulary. The target repo may name the same concept something else entirely. A grep miss is weak evidence of ABSENT. Before rating any sub-check ABSENT, search by concept: read the scoring entry points, the CI workflows, and the docs for the practice under whatever names the target uses.
+
 Shared header for every brief:
 
 ```
@@ -21,6 +23,11 @@ Rate this dimension PRESENT (implemented AND enforced in code or a test),
 PARTIAL (documented or half-built, not enforced), or ABSENT (no evidence).
 Evidence is mandatory: a file:line for each claim, or an explicit list of
 what you searched and found nothing. A rating with no evidence is rejected.
+
+The grep patterns below are starting points written against one benchmark's
+vocabulary. A pattern miss is weak evidence of ABSENT. Search by concept
+(scoring entry points, CI workflows, docs) under the target's own names
+before rating any sub-check ABSENT.
 
 Report (cap ~400 words):
 1. Rating: PRESENT | PARTIAL | ABSENT.
@@ -173,6 +180,10 @@ Sub-checks:
   higher"?
 - Halo effect: are rubric criteria ATOMIC (scored independently) rather than one
   global "how good was it" score that lets one strong dimension inflate the rest?
+- Docs-vs-code semantic drift: pick 2-3 load-bearing methodology claims about how
+  scoring works (consensus rule, criterion weighting, aggregation order) and trace
+  each one to the code that implements it. Do the docs describe the scoring the
+  code actually performs?
 
 Grep starting points:
   rg -n "resolved_model" .
@@ -193,6 +204,9 @@ Severity: judge not pinned to the served model is INVALIDATING (silent drift).
 Multi-judge with no agreement stat is INVALIDATING. Single judge sharing a lab
 with a contestant and no same-lab check is INVALIDATING for that contestant.
 Length bias unmeasured, or non-chance-corrected agreement, is HARDENING.
+Methodology docs that describe different scoring semantics than the code
+performs are HARDENING at minimum; if a published number is interpreted through
+the misdescribed semantics, escalate to INVALIDATING.
 ```
 
 ---
@@ -275,13 +289,15 @@ expensive run, or environment pinned only in prose, is HARDENING.
 
 ---
 
-## 7. Leaderboard exclusions
+## 7. Leaderboard exclusions & publish mechanics
 
 ```
 [shared header]
 
-You audit LEADERBOARD EXCLUSIONS. The question: are things that would distort the
-public board kept out of it — and is that ENFORCED BY A TEST, not just intended?
+You audit LEADERBOARD EXCLUSIONS AND PUBLISH MECHANICS. Two questions: are things
+that would distort the public board kept out of it — and is that ENFORCED BY A
+TEST, not just intended? And does the publish path actually ship what the docs
+promise?
 
 Sub-checks:
 - Is there a NULL-AGENT baseline (a deterministic do-nothing agent) proving a
@@ -295,12 +311,24 @@ Sub-checks:
   excluded row reaches the board — or only by a comment / good intention?
 - Is there a completeness gate blocking a partial leaderboard (some models failed)
   from publishing silently?
+- Publish mechanics: do the publish step's added paths actually commit? Run
+  `git check-ignore` on every path the publish/commit step names; a CI `git add`
+  of a gitignored file exits non-zero and the publish dies before anything ships.
+- Do the published surfaces the docs name (files, tables, JSON keys) match what
+  CI actually writes AND commits? Walk both directions: every surface the docs
+  promise must be written by some pipeline and shipped by the publish step, and
+  every file the publish step ships should be one the docs account for. A
+  computed-but-never-published table, or a doc-promised file CI never commits, is
+  a finding.
 
 Grep starting points:
   rg -ni "null.?agent|do-nothing|baseline" .
   rg -ni "exclude|exclusion|drop.*row|non-contestant|not.*leaderboard" scripts eval
   rg -ln "test_null|test_check_publish|test_holdout|exclude" tests
   rg -ni "allow.?partial|completeness|models_failed|check_publish" .
+  rg -n "git add|git commit|git push" .github
+  git check-ignore -v <each path the publish step adds>
+  rg -ni "publish|leaderboard\.json|latest\.csv|history" docs .gitignore
 
 Good looks like: a null-agent provider deliberately kept out of MODELS_UNDER_TEST
 and dropped at the single aggregation entry point; a test asserting it never
@@ -308,9 +336,17 @@ appears on the board; holdout rows tagged and split before aggregation; a publis
 gate reading models_failed to block a partial board. (cot-bench:
 eval/providers/null_agent.py, scripts/aggregate_results.py exclude_non_contestants,
 tests/test_null_agent.py, scripts/check_publish_ready.py, tests/test_check_publish_ready.py.)
+For publish mechanics, good looks like a test or CI check asserting that no path
+the publish step adds is gitignored, and docs that name exactly the surfaces the
+pipeline writes. The first real audit of this skill found a scheduled publish
+that died at `git add` of a gitignored file, and a robustness table the docs
+promised that no pipeline ever wrote.
 
 Severity: a null-agent / holdout / non-default row reaching the public board with
 no tripwire test is INVALIDATING (the board can silently include what it
 shouldn't). No null-agent baseline at all is INVALIDATING for a gameability claim.
-Exclusion done in code but with no test guarding it is HARDENING.
+Exclusion done in code but with no test guarding it is HARDENING. A publish step
+that fails loudly before committing (so it cannot put a wrong number on the
+board) is HARDENING; a publish path that could silently ship a distorted or
+partial surface is INVALIDATING. A promised-but-unwired surface is HARDENING.
 ```

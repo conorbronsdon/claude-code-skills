@@ -1,6 +1,6 @@
 ---
 name: eval-integrity
-description: Audit an LLM evaluation or benchmark repo for integrity and credibility practices. Use when asked to "audit my benchmark," "is my eval trustworthy," "check my leaderboard for contamination," "review this benchmark's methodology," or "what would a reviewer attack in my eval." Greps the target repo for evidence across seven dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions) and emits a scored report with file:line evidence, severity, and concrete fixes. Spawns one subagent per dimension in parallel.
+description: Audit an LLM evaluation or benchmark repo for integrity and credibility practices. Use when asked to "audit my benchmark," "is my eval trustworthy," "check my leaderboard for contamination," "review this benchmark's methodology," or "what would a reviewer attack in my eval." Greps the target repo for evidence across seven dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions) and emits a scored report with file:line evidence, severity, and concrete fixes. Spawns one subagent per dimension in parallel, or runs the briefs inline sequentially when no subagent tool exists.
 ---
 
 # eval-integrity — Benchmark Credibility Audit
@@ -48,6 +48,7 @@ Record for the subagents:
 - Absolute repo path.
 - Branch + HEAD commit SHA (`git rev-parse HEAD`).
 - The scoring entry point(s), the results directory, and any methodology/governance docs.
+- The target's open PRs (`gh pr list`). This is a standing step, not optional. Verify any relevant PR against its actual diff. A finding that an in-flight PR already fixes is reported as known/in-flight, not as a gap, and is excluded from the gap counts.
 
 ## Step 2: Spawn one subagent per dimension, in parallel
 
@@ -63,7 +64,7 @@ The seven dimensions:
 | 4 | **Judge validity** | Is the judge model pinned to the model *actually served*? Are multi-judge agreement stats reported? Are judge-family-vs-contestant conflicts, length/verbosity bias, and halo effects controlled? |
 | 5 | **Statistical honesty** | Do headline numbers carry confidence intervals? Is micro-vs-macro aggregation stated? Is pass@k vs pass^k disambiguated? Are seeds fixed and multiple-comparison risk acknowledged? |
 | 6 | **Reproducibility** | Is there a deterministic re-run path, cost caps / resume for expensive runs, and pinned environment? |
-| 7 | **Leaderboard exclusions** | Are null-agent baselines, holdout rows, and non-default configs kept out of public aggregates — enforced by **tripwire tests**, not just stated intent? |
+| 7 | **Leaderboard exclusions & publish mechanics** | Are null-agent baselines, holdout rows, and non-default configs kept out of public aggregates — enforced by **tripwire tests**, not just stated intent? And does the publish path actually ship what the docs promise? |
 
 Each subagent prompt must specify:
 1. Repo path (absolute), branch, HEAD SHA.
@@ -72,6 +73,8 @@ Each subagent prompt must specify:
 4. The exact report contract (Step 3 format), capped at ~400 words.
 
 If the repo is small (one scoring file, no CI, no leaderboard), you may run the dimensions inline yourself instead of spawning subagents. Parallel subagents pay off on a real benchmark with CI, a results pipeline, and a methodology doc.
+
+If the environment has no subagent or Task tool, do not skip or thin the audit. Run the dimension briefs inline yourself, one after another, in dimension order. Same briefs, same evidence bar, same report contract. Note in the report that the audit ran sequentially with a single auditor.
 
 ## Step 3: Scoring rule each subagent applies
 
@@ -82,6 +85,8 @@ Every dimension returns one rating, with evidence:
 - **ABSENT** — no evidence in code, tests, or docs.
 
 Evidence is mandatory. A rating with no `file:line` (or an explicit "searched X, Y, Z — found nothing") is not a finding, it's a guess. Reject it.
+
+A grep miss alone does not establish ABSENT. The briefs' grep patterns carry one repo's vocabulary; the target may name the same concept differently. Search by concept (read the scoring entry points, the CI workflows, the docs) before rating any sub-check ABSENT.
 
 ## Step 4: Assign severity
 
@@ -125,6 +130,7 @@ Rules for the report:
 - **Lead with what invalidates.** Hardening gaps go below. Strengths last.
 - **Every gap carries a concrete fix**, not "consider improving X." Name the file to add, the guard to write, the test to add. If cot-bench solves it a particular way, that pattern is a fair suggested fix.
 - **No fix is "add more scenarios"** unless low scenario count is the specific finding (e.g. CIs so wide the ranking is noise).
+- **In-flight fixes are not gaps.** If an open PR on the target already fixes a finding (verified against its diff, not its title), list it under a `KNOWN / IN-FLIGHT` line after the hardening gaps, name the PR, and leave it out of the gap counts.
 - **Plain and direct.** Short sentences. No hype. State the gap, the evidence, the fix.
 
 ## Step 6: Offer the fixes (do not auto-apply)
@@ -143,7 +149,7 @@ Each dimension maps to a way a benchmark's numbers get dismissed in review:
 - **Judge validity** defeats "your judge drifted / favors its own family / rewards length."
 - **Statistical honesty** defeats "that ranking is sampling noise."
 - **Reproducibility** defeats "no one can re-run this."
-- **Leaderboard exclusions** defeats "a do-nothing agent ranks mid-board" and "you trained on what you published."
+- **Leaderboard exclusions** defeats "a do-nothing agent ranks mid-board" and "you trained on what you published." Its publish-mechanics sub-check defeats "the table your docs promise is never actually written."
 
 A benchmark that passes all seven is one whose headline number a skeptical reviewer has to take seriously.
 
