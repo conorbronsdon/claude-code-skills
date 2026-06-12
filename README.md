@@ -172,6 +172,10 @@ These skills follow the [agentskills.io](https://agentskills.io) format and work
 
 Found a bug or have an improvement? Open an issue or PR. If you've built a skill that others would find useful, I'm happy to consider adding it.
 
+## About
+
+Built by [Conor Bronsdon](https://github.com/conorbronsdon). These skills were developed through daily use while running [Chain of Thought](https://chainofthought.show), a podcast about AI infrastructure and developer tools.
+
 ---
 
 ## Disclaimer
@@ -181,7 +185,3 @@ Found a bug or have an improvement? Open an issue or PR. If you've built a skill
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-## About
-
-Built by [Conor Bronsdon](https://github.com/conorbronsdon). These skills were developed through daily use while running [Chain of Thought](https://chainofthought.show), a podcast about AI infrastructure and developer tools.
