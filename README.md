@@ -9,6 +9,8 @@ Production-tested skills for Claude Code. Drop-in markdown files that teach Clau
 [![Podcast](https://img.shields.io/badge/Podcast-Chain_of_Thought-purple?style=flat-square)](https://chainofthought.show)
 [![X](https://img.shields.io/badge/X-@ConorBronsdon-black?style=flat-square&logo=x)](https://x.com/ConorBronsdon)
 
+<img src="docs/demo.gif" alt="A representative /code-review session: the orchestrator sizes the PR as high-stakes, spawns adversarial and operational subagents in parallel alongside Copilot, then triages the findings" width="800">
+
 </div>
 
 ---
