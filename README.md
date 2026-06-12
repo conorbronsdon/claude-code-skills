@@ -22,6 +22,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 |-------|----------|---------------|
 | [Session Management](session-management/) | `/start`, `/end`, `/update`, `/today` | Claude Code has no memory between sessions — this adds it |
 | [Code Review](code-review/) | `/code-review` | Single-pass reviews miss architectural P0s — this orchestrates Copilot + parallel subagents |
+| [Eval Integrity](eval-integrity/) | `/eval-integrity` | Benchmark numbers get dismissed in review — this audits an eval repo across 7 credibility dimensions |
 | [Reconcile](reconcile/) | `/reconcile` | Parallel sessions cause state drift — this detects it |
 | [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
 | [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
@@ -71,6 +72,12 @@ Includes setup guide with the required file structure and minimal starter templa
 Multi-agent orchestrator for code-PR review. Spawns Copilot plus parallel subagents (adversarial, operational, reference-comparison) sized to PR risk, with stale-finding triage and a hard 2-round iteration cap. Built because line-level review consistently misses architectural failures (Vercel `maxDuration`, persistent-replay vectors, missing retry budgets) that only surface when a reviewer is asked the right operational question.
 
 Use for: high-stakes PRs touching auth, payment, crypto, deploy configs, or external SDK integrations. Skip for typos and trivial changes.
+
+### [Eval Integrity](eval-integrity/)
+
+Credibility audit for LLM evaluation and benchmark repos. Greps the target repo for evidence across seven integrity dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions), spawns one auditor subagent per dimension in parallel, and emits a scored report: PRESENT / PARTIAL / ABSENT with `file:line` evidence and a concrete fix for every gap. Each gap is tagged INVALIDATING (a reviewer can throw out the published number) or HARDENING. Read-only — it reports and offers fixes, never edits the benchmark or re-runs an eval. The checks were extracted from hardening a real agent benchmark for external grant review.
+
+Use before submitting a benchmark to a grant, conference, or public leaderboard, or whenever someone says "I don't trust those numbers."
 
 ### [Reconcile](reconcile/)
 
