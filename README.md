@@ -26,6 +26,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
 | [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
 | [Guest Circuit](guest-circuit/) | `/guest-circuit` | Pitching a podcast guest blind re-asks what three other shows asked — this maps their circuit and finds the unclaimed angle |
+| [Angel Diligence](angel-diligence/) | `/angel-diligence` | Startup diligence is ad hoc and easy to hallucinate; this produces a cited deal memo with a verdict scaffold, not a recommendation |
 | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 90+ checks across vocabulary, structure, rhythm |
 
 ## Quick Start
