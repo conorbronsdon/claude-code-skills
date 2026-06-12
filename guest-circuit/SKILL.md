@@ -13,6 +13,17 @@ This skill maps the circuit and produces a report you can act on: appearance tim
 
 ---
 
+## When to Use
+
+- "Map [person]'s podcast circuit" / "where has [person] podcasted?"
+- "Research [person] before I send guest outreach"
+- "Find an unclaimed angle for [person]"
+- Before pitching a prospective guest, to gate the booking decision and shape the pitch
+
+(See "When NOT to Use" below for the cases this skill is wrong for.)
+
+---
+
 ## Step 1: Disambiguate
 
 Names collide. Before any search, confirm one anchor fact: company, role, or a known piece of work (book, project, paper).
@@ -49,9 +60,12 @@ WebSearch queries, run all of them:
 - `"[name]" podcast guest`
 - `site:youtube.com "[name]" podcast OR interview` — many appearances are YouTube-only and never reach podcast indexes.
 
+YouTube caveat: a `youtu.be/...` short link redirects to `youtube.com/watch?v=...`, and the watch page often returns only the site nav/footer when fetched as plain HTML — no description, no transcript. Do not let that silently drop a real hit. When a YouTube URL is the only evidence, confirm the appearance from the show's own site or show-notes page instead; if no other page exists and the video page won't yield a description, the hit goes in "could not verify," not the timeline.
+
 ### 2c. Their own trail
 
 Guests promote their own appearances. Check:
+- A dedicated appearances index. Many prolific guests (especially technical ones) maintain a literal page or blog tag listing every podcast they've been on — search `"[name]" podcast appearances` and check their site for a `/podcasts`, `/press`, `/now`, or tag page. When it exists it collapses most of the sweep into one fetch: it gives you dated, linked entries straight from the source. Treat it as the timeline's source of record, then spot-check individual entries against each show's own page rather than re-deriving the whole list.
 - Personal site or company bio: press, speaking, or media page.
 - LinkedIn and X posts (search `"[name]" site:linkedin.com podcast` if no direct access).
 - Their newsletter or blog, which often links appearances.
@@ -124,14 +138,26 @@ These are hard requirements, not style preferences:
 
 ---
 
-## When NOT to Use This Skill
+## When NOT to Use
 
 - The guest is already booked and you need interview prep. Use a talk-track or research workflow instead. This skill is for the booking decision and the pitch.
 - You only need contact info or a bio. That is a single web search, not a circuit sweep.
 
 ---
 
+## Worked example
+
+[`examples/simon-willison-circuit.md`](examples/simon-willison-circuit.md) is a real
+run of this skill against a fully public figure (Simon Willison — creator of
+Datasette, co-creator of Django). It shows the full output shape: a 20-plus-entry
+appearance timeline with verified URLs and dates, the repeated stump speech to
+avoid, unclaimed angles derived from his current work, a receptiveness read, and a
+specific pitch angle for a hypothetical AI-engineering podcast. It also exercises
+the Step 2a degradation path — Podcast Index was not configured in that run, so the
+sweep fell back to web search and the report says so.
+
 ## Cross-references
 
 - `patterns/subagent-prompts.md` — paste-ready prompts for the three sweep modalities.
+- `examples/simon-willison-circuit.md` — a real, fully-cited circuit report.
 - [podcastindex-mcp](https://github.com/conorbronsdon/podcastindex-mcp) — the MCP server providing `search_by_person` and the other Podcast Index tools.

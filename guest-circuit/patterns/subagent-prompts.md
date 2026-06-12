@@ -61,6 +61,12 @@ confirm: it is this person (anchor fact), they are a guest, and the publish
 date. Capture an audience signal if visible on the page (YouTube view count,
 known network) without extra research.
 
+YouTube notes: a youtu.be short link redirects (HTTP 303) to a
+youtube.com/watch URL — follow the redirect, don't drop the hit. The watch
+page often returns only nav/footer with no description; if so, confirm the
+appearance from the show's own site instead. A YouTube link you can't confirm
+elsewhere goes in could-not-verify.
+
 Return (cap ~400 words + table):
 1. Table: date | show | episode title | link | audience signal.
 2. "Could not verify" list: leads where a snippet suggested an appearance but
@@ -82,6 +88,11 @@ Use always. Guests promote their own appearances; this catches what indexes and 
 You are researching [NAME] ([ANCHOR FACT]) through their own channels.
 
 Check, fetching each page you cite:
+0. A dedicated appearances index first: search "[NAME]" podcast appearances and
+   look for a /podcasts, /press, /now, or blog-tag page they curate. If it
+   exists, it is the best single source — dated, linked entries from the guest
+   themselves. Use it as the timeline's source of record, then spot-check
+   entries against the shows' own pages.
 1. Their personal or company site: press, speaking, media, or about page.
 2. Their recent work, roughly the last 12 months: blog and newsletter posts,
    papers (arXiv/Scholar), conference talks (event sites, YouTube), product
