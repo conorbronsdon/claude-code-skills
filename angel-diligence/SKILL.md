@@ -108,4 +108,5 @@ Load and follow the instructions in `skills/angel-diligence/SKILL.md`.
 ## Cross-references
 
 - `patterns/research-prompts.md`: paste-ready subagent prompt templates for the three research angles.
+- `examples/illustrative-memo.md`: a full nine-section memo on GitLab's Series A era (2015), reconstructed from public sources and clearly labeled illustrative.
 - `README.md`: abbreviated example memo excerpt showing the output shape.

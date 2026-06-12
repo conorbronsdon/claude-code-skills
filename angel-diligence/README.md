@@ -1,10 +1,18 @@
 # Angel Diligence
 
+![angel-diligence demo](docs/demo.gif)
+
 Pre-investment research and deal-memo generation for angel investors. Give it a company name (plus optional deck notes, founders, round details) and it runs parallel web research under strict citation rules, then writes a nine-section memo: Snapshot, Team, Market, Product & moat, Traction, Competition, Risks, Open questions for the founder call, and a Verdict scaffold. It never outputs an invest/pass call. The human decides.
 
 Two rules do most of the work: every factual claim needs a fetched URL or gets marked "could not verify", and everything sourced only from the company itself is labeled "claimed" rather than "verified". Deck contents never go into web searches.
 
 See [SKILL.md](SKILL.md) for full instructions and [patterns/research-prompts.md](patterns/research-prompts.md) for the subagent templates.
+
+A full, clearly-labeled **illustrative** memo — GitLab reconstructed at its
+Series A moment (September 2015) from public sources, with the outcome now known —
+is in [examples/illustrative-memo.md](examples/illustrative-memo.md). It shows all
+nine sections end to end. (It is a teaching artifact, not real diligence on
+GitLab; the skill is meant to be run live against a current private company.)
 
 ## Example output (abbreviated)
 
