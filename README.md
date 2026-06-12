@@ -25,6 +25,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [Reconcile](reconcile/) | `/reconcile` | Parallel sessions cause state drift — this detects it |
 | [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
 | [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
+| [Guest Circuit](guest-circuit/) | `/guest-circuit` | Pitching a podcast guest blind re-asks what three other shows asked — this maps their circuit and finds the unclaimed angle |
 | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 90+ checks across vocabulary, structure, rhythm |
 
 ## Quick Start
@@ -83,6 +84,37 @@ Scan for orphaned worktrees and stale branches left behind by crashed or abandon
 ### [Skill Creator](skill-creator/)
 
 Meta-skill: describe what you want a skill to do in plain language, and it generates the SKILL.md, command routing file, and CLAUDE.md additions. Good for bootstrapping new skills quickly.
+
+### [Guest Circuit](guest-circuit/)
+
+Podcast-appearance research for guest booking. Give it a prospective guest's name plus one anchor fact, and it maps their podcast circuit: every show they've appeared on, how recently, what they covered, and what angle is still unclaimed for your show. Uses [podcastindex-mcp](https://github.com/conorbronsdon/podcastindex-mcp) (`search_by_person`) as the canonical source when configured, degrading to web search when not. Every appearance is verified by a fetched page; nothing comes from model memory.
+
+Abbreviated example output:
+
+```markdown
+# Circuit Report: Jane Doe (CTO, Acme) — 2026-06-11
+
+## Appearance Timeline
+| Date       | Show            | Episode                      | Audience signal |
+|------------|-----------------|------------------------------|-----------------|
+| 2026-05-02 | Infra Weekly    | "Scaling Acme's eval stack"  | 410 eps, indie  |
+| 2026-03-18 | The Stack Pod   | "Jane Doe on agent testing"  | 38K YT views    |
+| 2026-01-09 | DevTools Radio  | "From monolith to agents"    | network show    |
+
+## Stump Speech (do not re-ask)
+- The Acme founding story and the monolith rewrite (told on all 3 shows)
+
+## Unclaimed Angles
+- Her March post on eval dataset rot — no show has touched it
+
+## Receptiveness Signal
+3 appearances in 5 months: actively podcast-receptive, cold outreach viable.
+
+## Suggested Pitch Angle
+[one specific paragraph built on the unclaimed angle]
+```
+
+Use before outreach, not for interview prep of an already-booked guest.
 
 ## How to Use
 
