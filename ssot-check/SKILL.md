@@ -1,6 +1,6 @@
 ---
 name: ssot-check
-description: Single-source-of-truth drift auditor for documentation-heavy repos. Finds facts hand-copied across files, builds a manifest of canonical locations, and verifies every copy still matches.
+description: Single-source-of-truth drift auditor for documentation-heavy repos. Use when asked to "check for drift," "find copies of this number," "audit the docs for stale facts," or "set up an SSOT manifest." Finds facts hand-copied across files, builds a manifest of canonical locations, and verifies every copy still matches.
 ---
 
 # /ssot-check — Fact-Copy Drift Auditor
@@ -15,6 +15,12 @@ It complements `/reconcile`. Reconcile catches multi-session drift in state file
 - **Check mode**: before commits that touch docs, as a pre-commit habit, or any time a canonical number changed
 - After a bulk find-and-replace, to confirm nothing was missed
 - When a repo has a "grep for other files with the same number" rule that people forget to follow
+
+## When NOT to Use
+
+- A repo with no duplicated facts — one source of record per value, nothing hand-copied. There is nothing to drift.
+- Values that legitimately differ per file (dated snapshot series, goal targets vs. current numbers, historical records). Those are not copies; tracking them produces false positives. See Edge Cases.
+- Multi-session state drift in working files. That is `/reconcile`'s job, not this skill's.
 
 ## The Manifest: `.ssot.yaml`
 
@@ -181,3 +187,8 @@ Goal: verify every copy still matches its canonical value. Main-thread, fast, re
 - **Greppable manifest.** Plain YAML, plain regexes. A human can verify any entry with one grep.
 - **Fast enough for a pre-commit habit.** Check mode is file reads and regex matches. Seconds, not minutes.
 - **Exact match or flagged.** No fuzzy comparison. Ambiguity gets surfaced to the human, not resolved silently.
+
+## Cross-references
+
+- `patterns/discovery-prompt.md` — paste-ready subagent template for the discover-mode scan on large repos.
+- `examples/cot-production-discovery/` — a real discover-mode run: the proposed `.ssot.yaml` plus the live drift it surfaced.
