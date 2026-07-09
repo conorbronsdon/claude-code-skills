@@ -32,6 +32,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [Guest Circuit](guest-circuit/) | `/guest-circuit` | Pitching a podcast guest blind re-asks what three other shows asked — this maps their circuit and finds the unclaimed angle |
 | [Angel Diligence](angel-diligence/) | `/angel-diligence` | Startup diligence is ad hoc and easy to hallucinate; this produces a cited deal memo with a verdict scaffold, not a recommendation |
 | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 90+ checks across vocabulary, structure, rhythm |
+| [demo-gif-skill](https://github.com/conorbronsdon/demo-gif-skill) ↗ | `"add a demo gif"` | Demo GIFs rot the moment a tool's output changes — this scripts a reproducible one (vhs/Playwright) into any README |
 
 ## Quick Start
 
