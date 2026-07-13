@@ -2,6 +2,7 @@
 name: skill-creator
 description: Generate a new Claude Code skill from a plain-language description — decides invocation control (disable-model-invocation vs user-invocable), arguments (argument-hint, $ARGUMENTS), and context cost, then scaffolds and tests it.
 ---
+<!-- x-source: agent-skill-builder/SKILL.md @ 1337c4f -->
 
 # skill-creator — Build New Skills Fast
 
