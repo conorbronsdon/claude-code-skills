@@ -28,7 +28,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [Reconcile](reconcile/) | `/reconcile` | Parallel sessions cause state drift — this detects it |
 | [SSOT Check](ssot-check/) | `/ssot-check` | Facts hand-copied across docs drift — this tracks the canonical value and audits every copy |
 | [Recover](recover/) | `/recover` | Crashed sessions leave orphaned worktrees — this cleans them |
-| [Skill Creator](skill-creator/) | `/skill-creator` | Writing skills from scratch is slow — this scaffolds them |
+| [Skill Creator](skill-creator/) | `/skill-creator` | Skill generators rot and skip invocation/context decisions — this scaffolds against the live spec |
 | [Guest Circuit](guest-circuit/) | `/guest-circuit` | Pitching a podcast guest blind re-asks what three other shows asked — this maps their circuit and finds the unclaimed angle |
 | [Angel Diligence](angel-diligence/) | `/angel-diligence` | Startup diligence is ad hoc and easy to hallucinate; this produces a cited deal memo with a verdict scaffold, not a recommendation |
 | [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 90+ checks across vocabulary, structure, rhythm |
@@ -101,7 +101,7 @@ Scan for orphaned worktrees and stale branches left behind by crashed or abandon
 
 ### [Skill Creator](skill-creator/)
 
-Meta-skill: describe what you want a skill to do in plain language, and it generates the SKILL.md, command routing file, and CLAUDE.md additions. Good for bootstrapping new skills quickly.
+Meta-skill: describe what you want a skill to do in plain language, and it generates a ready-to-ship skill — including the design decisions most generators skip: invocation control (`disable-model-invocation` for user-only workflows, `user-invocable: false` for background knowledge), arguments (`argument-hint`, `$ARGUMENTS`), and description budget (triggers in the description, detail in the body, since every model-invocable description loads into every session). Ships with a dated snapshot of the frontmatter spec and re-fetches the official docs when it's over 3 months old, so it doesn't rot as the spec evolves.
 
 ### [Guest Circuit](guest-circuit/)
 
