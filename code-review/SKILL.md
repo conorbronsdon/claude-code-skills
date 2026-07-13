@@ -6,9 +6,9 @@ argument-hint: "[pr-number-or-branch]"
 
 # Code Review — Multi-Agent PR Review
 
-User-invokable orchestrator for code-PR review across any repo. Validated on a Vercel-deployed Next.js app PR across 5 review rounds: Copilot caught ~10 line-level issues; parallel subagents caught the P0 architectural miss (Vercel `maxDuration`) Copilot missed across all 5 rounds, plus a persistent-replay vector and 4 operational issues.
+User-invokable orchestrator for code-PR review across any repo: Copilot for line-level findings, parallel subagents for the architectural and operational misses line-level review can't see. (Validation evidence and origin story: [README](README.md).)
 
-If you have access to a paid multi-agent review service (e.g. `/ultrareview` in Claude Code), this skill is the in-flight free version of the same idea — useful when you want this depth without spinning up a billed cloud review.
+**Fallbacks:** no `gh` or not a GitHub repo → review the local diff (`git diff <base>...HEAD`) and skip the Copilot lane entirely; no subagent tool → run the review angles sequentially in the main thread. Detect what's available before assuming Copilot access.
 
 ---
 
@@ -39,7 +39,7 @@ If trivial → stop reading this skill, just request Copilot review and ship.
 Three angles that empirically work. Pick by risk shape:
 
 - **Adversarial** — "Try to break it. What's the worst attack?" Finds security holes, abuse vectors, replay/race conditions, malformed-input handling.
-- **Operational** — "What fails in production at scale? Latency, cost, observability, timeouts, env config, retries, cold-start?" Finds the architectural P0s Copilot misses (Vercel `maxDuration` was the canonical one).
+- **Operational** — "What fails in production at scale? Latency, cost, observability, timeouts, env config, retries, cold-start?" Finds the architectural P0s line-level review misses (platform execution limits are the canonical class).
 - **Reference-comparison** — "Does this match the upstream reference impl exactly? Where does it diverge and why?" Use for third-party SDK / spec integration (Phantom deep-link, Stripe, OAuth providers, RPC clients).
 
 Spawn all chosen subagents in **a single tool-call batch** so they run in parallel. Prompt templates live in `patterns/subagent-prompts.md`.

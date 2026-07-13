@@ -21,7 +21,9 @@ When running multiple Claude Code sessions in parallel (especially with worktree
 ### 0. Detect the default branch
 
 ```bash
+git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repository — nothing to reconcile"; exit 0; }
 DEFAULT=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+DEFAULT=${DEFAULT:-main}   # no remote configured — fall back and say so in the report
 ```
 
 ### 1. Scan recent commit history across all branches

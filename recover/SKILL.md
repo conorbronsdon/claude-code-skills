@@ -24,7 +24,8 @@ Don't assume `main`. Resolve it once and use it everywhere below:
 
 ```bash
 DEFAULT=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
-DEFAULT=${DEFAULT:-$(git remote show origin | sed -n 's/.*HEAD branch: //p')}
+DEFAULT=${DEFAULT:-$(git remote show origin 2>/dev/null | sed -n 's/.*HEAD branch: //p')}
+DEFAULT=${DEFAULT:-main}   # no remote at all — fall back and note it in the report
 ```
 
 ### 1. List all worktrees

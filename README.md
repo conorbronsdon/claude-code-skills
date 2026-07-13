@@ -49,6 +49,15 @@ cp -r ssot-check your-project/.claude/skills/ssot-check
 
 That's the whole installation: the directory name becomes the command, supporting files (`patterns/`, `examples/`) ride along, and edits hot-reload within a session. Install to `~/.claude/skills/` instead to make a skill available across all your projects.
 
+Or use the bundled installer, which also handles updates and drift checks against your installed copies:
+
+```bash
+./install.sh install ssot-check ~/my-project     # copy in
+./install.sh diff    ssot-check ~/my-project     # what changed upstream since you installed?
+./install.sh update  ssot-check ~/my-project     # refresh
+TARGET_SCOPE=user ./install.sh install reconcile # install to ~/.claude/skills instead
+```
+
 Two variations:
 
 - **Multi-command skills** (session-management bundles `/start`, `/end`, `/update`, `/today`): create one thin `.claude/skills/<command>/SKILL.md` per command that says `Load and follow .claude/skills/session-management/SKILL.md, section "/start — Begin Session"` — or use `.claude/commands/` stub files, which still work but are the legacy form.

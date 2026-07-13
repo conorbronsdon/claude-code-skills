@@ -42,7 +42,7 @@ Use the anchor to filter every result in later steps. A hit that cannot be tied 
 
 ## Step 2: Appearance Sweep
 
-Three source modalities. Run them as parallel subagents in a single tool-call batch (prompt templates in `patterns/subagent-prompts.md`). If subagents are unavailable, run the modalities sequentially in the same order.
+Three source modalities. Run them as parallel subagents in a single tool-call batch (prompt templates in `patterns/subagent-prompts.md`). If subagents are unavailable, run the modalities sequentially in the same order. If web access is unavailable entirely, stop and say the sweep cannot run — never populate the timeline from model memory.
 
 ### 2a. Podcast Index (canonical source, when configured)
 
