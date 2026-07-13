@@ -99,7 +99,7 @@ Scan for orphaned worktrees and stale branches left behind by crashed or abandon
 
 ### [Skill Creator](skill-creator/)
 
-Meta-skill: describe what you want a skill to do in plain language, and it generates a ready-to-ship skill — including the design decisions most generators skip: invocation control (`disable-model-invocation` for user-only workflows, `user-invocable: false` for background knowledge), arguments (`argument-hint`, `$ARGUMENTS`), and description budget (triggers in the description, detail in the body, since every model-invocable description loads into every session). Ships with a dated snapshot of the frontmatter spec and re-fetches the official docs when it's over 3 months old, so it doesn't rot as the spec evolves.
+Meta-skill: describe what you want a skill to do in plain language, and it generates a ready-to-ship skill — including the design decisions most generators skip: invocation control (`disable-model-invocation` for user-only workflows, `user-invocable: false` for background knowledge), arguments (`argument-hint`, `$ARGUMENTS`), and description budget (triggers in the description, detail in the body, since every model-invocable description loads into every session). Ships with a dated snapshot of the frontmatter spec; the canonical, hardened version — with a machine-checkable validator and weekly spec-drift CI — lives at [agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder), and this copy tracks it.
 
 ### [Guest Circuit](guest-circuit/)
 

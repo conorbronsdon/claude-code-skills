@@ -16,7 +16,7 @@ Takes a plain-language description of a task and generates a ready-to-ship skill
 ## Before You Start
 
 Read:
-- [reference.md](reference.md) — snapshot of the current frontmatter spec, argument substitutions, and invocation/context-loading behavior. **Check its snapshot date first: if older than 3 months, WebFetch `https://code.claude.com/docs/en/skills`, diff the frontmatter reference against the snapshot, and update reference.md before scaffolding.** This is what keeps generated skills from going stale.
+- [reference.md](reference.md) — snapshot of the current frontmatter spec, argument substitutions, and invocation/context-loading behavior. **Check its snapshot date first: if older than 3 months, warn the user and continue with the pinned snapshot — don't re-fetch or modify the reference mid-generation.** Spec updates are maintenance, not a side effect of building a skill: the canonical copy at [agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder) has weekly spec-drift CI that opens an issue on upstream changes; sync from there, or update on an explicit ask.
 - The host repo's `CLAUDE.md` and existing skills — avoid duplicating a skill that already exists, and match local conventions.
 
 ## Instructions

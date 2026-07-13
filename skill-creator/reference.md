@@ -1,7 +1,7 @@
 # Skill Frontmatter & Behavior Reference
 
 **Snapshot:** 2026-07-13, from https://code.claude.com/docs/en/skills (frontmatter reference + invocation control + lifecycle sections).
-**Staleness rule:** if this date is >3 months old, re-fetch that page, diff against this file, and update before scaffolding a new skill.
+**Staleness policy:** pinned snapshot — warn and continue when stale; never update mid-generation. Canonical copy + weekly drift CI: https://github.com/conorbronsdon/agent-skill-builder (sync from there).
 
 ## Frontmatter fields (all optional)
 
