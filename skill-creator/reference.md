@@ -17,7 +17,7 @@
 | `allowed-tools` | Tools pre-approved (no permission prompt) while the skill is active. A grant, **not** a restriction — everything else stays callable under normal permissions. Scope tightly: `Bash(git add *)`. Takes effect in project skills only after workspace trust. |
 | `disallowed-tools` | Tools *removed* from the pool while active (e.g. `AskUserQuestion` for autonomous loops). Clears on the next user message. |
 | `model` | Model override while active (rest of turn). Same values as `/model`, or `inherit`. |
-| `effort` | Effort override: `low`–`max`. Default: inherits session. |
+| `effort` | Effort override: `low`/`medium`/`high`/`xhigh`/`max`. Default: inherits session. |
 | `context` | `fork` = run in an isolated subagent; skill body becomes the prompt. Only for explicit tasks — guidelines-only content returns nothing useful. |
 | `agent` | Subagent type when `context: fork` (`Explore`, `Plan`, `general-purpose`, or custom from `.claude/agents/`). Default `general-purpose`. Explore/Plan skip CLAUDE.md for a smaller context. |
 | `hooks` | Hooks scoped to the skill's lifecycle. |
@@ -32,6 +32,7 @@
 | `$ARGUMENTS[N]` / `$N` | Nth argument, 0-based, shell-style quoting (`"hello world"` = one arg). |
 | `$name` | Named arg declared in `arguments:` frontmatter. |
 | `${CLAUDE_SESSION_ID}` | Current session ID. |
+| `${CLAUDE_EFFORT}` | Active effort level (`low`/`medium`/`high`/`xhigh`/`max`) — adapt instructions to it. |
 | `${CLAUDE_SKILL_DIR}` | Directory containing SKILL.md — use for bundled scripts so paths survive install location. |
 | `${CLAUDE_PROJECT_DIR}` | Project root (v2.1.196+; also works inside `allowed-tools` rules). |
 

@@ -87,6 +87,8 @@ A copy — or the canonical itself — may live in a sibling local clone (market
 2. **Fixes to a sibling repo are a separate commit.** Propose the edit, but note it lands in the other repo with its own commit and deploy path.
 3. **A cross-repo canonical is legitimate.** When the audited repo's own docs delegate a surface to the sibling ("the media kit we send sponsors is the live page"), the sibling file is the canonical and the audited repo holds the copies. The pull-fresh rule applies doubly: a stale canonical poisons every comparison for that fact.
 
+**Mode selection:** if $ARGUMENTS is `discover` or `check`, run that mode. Otherwise auto-detect: `.ssot.yaml` present → check mode, absent → discover mode.
+
 ## Discover Mode (first run)
 
 Goal: scan the repo for drift-prone facts and propose a `.ssot.yaml`. The human edits and approves it. Never write the manifest without approval.

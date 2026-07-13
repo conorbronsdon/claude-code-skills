@@ -27,6 +27,8 @@ This skill maps the circuit and produces a report you can act on: appearance tim
 
 ## Step 1: Disambiguate
 
+Input: $ARGUMENTS (guest name, plus an anchor fact if given).
+
 Names collide. Before any search, confirm one anchor fact: company, role, or a known piece of work (book, project, paper).
 
 - If the user provided an anchor ("Jane Doe, CTO at Acme"), proceed.

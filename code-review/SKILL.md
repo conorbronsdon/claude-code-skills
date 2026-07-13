@@ -14,6 +14,8 @@ If you have access to a paid multi-agent review service (e.g. `/ultrareview` in 
 
 ## Step 1: Assess PR Scope
 
+The review target is $ARGUMENTS (a PR number, branch, or URL). If empty, infer it from the conversation or ask.
+
 ```bash
 gh pr view N --json files,additions,deletions,title
 ```
@@ -62,11 +64,11 @@ Don't wait for Copilot to start before spawning subagents. They run in parallel.
 
 Three buckets:
 
-**Real findings** — fix now. Push fix to the PR branch.
+**Real findings** — fix now. Push fix to the PR branch. Pushing changes external state: unless the user already asked you to fix or babysit this PR, confirm before the first push of the session.
 
 **Stale re-flags** — Copilot will sometimes re-flag findings against unmoved diff lines after fixes ship at HEAD. **Always read the file at HEAD before re-fixing.** If the fix is already there, drop a one-line reply on the comment ("Fixed at <sha>") and move on. Do not re-fix.
 
-**Deferred (filed)** — tests, refactors, or work outside scope. File as a GitHub issue, link the issue number in the merge commit message, move on. Don't expand the PR.
+**Deferred (filed)** — tests, refactors, or work outside scope. File as a GitHub issue (confirm with the user before creating it), link the issue number in the merge commit message, move on. Don't expand the PR.
 
 ---
 

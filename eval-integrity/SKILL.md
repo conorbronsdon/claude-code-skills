@@ -1,6 +1,6 @@
 ---
 name: eval-integrity
-description: Audit an LLM evaluation or benchmark repo for integrity and credibility practices. Use when asked to "audit my benchmark," "is my eval trustworthy," "check my leaderboard for contamination," "review this benchmark's methodology," or "what would a reviewer attack in my eval." Greps the target repo for evidence across seven dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions) and emits a scored report with file:line evidence, severity, and concrete fixes. Spawns one subagent per dimension in parallel, or runs the briefs inline sequentially when no subagent tool exists.
+description: Audit an LLM evaluation or benchmark repo for integrity and credibility practices. Use when asked to "audit my benchmark," "is my eval trustworthy," "check my leaderboard for contamination," "review this benchmark's methodology," or "what would a reviewer attack in my eval." Greps the target repo for evidence across seven dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions) and emits a scored report with file:line evidence, severity, and concrete fixes.
 argument-hint: "[path-to-benchmark-repo]"
 ---
 
@@ -10,7 +10,7 @@ User-invokable auditor for LLM evaluation and benchmark repos. It answers one qu
 
 Most benchmark repos have a runner and a leaderboard but lack the integrity scaffolding that makes a published score mean what it appears to mean. This skill checks for that scaffolding, names what is missing, and rates whether each gap *invalidates published numbers* or is *nice-to-have*.
 
-The checks below were extracted from hardening a real agent benchmark ([cot-bench](https://github.com/conorbronsdon/cot-bench)) for an external grant review. Where a check needs a concrete example, cot-bench file names appear as illustrations — they are hints for what good looks like, not paths the auditor expects to find in your repo.
+The checks below were extracted from hardening a real agent benchmark (cot-bench, a private podcast-evals repo) for an external grant review. Where a check needs a concrete example, cot-bench file names appear as illustrations — they are hints for what good looks like, not paths the auditor expects to find in your repo.
 
 This is the static-analysis cousin of `code-review`: same parallel-subagent orchestration, but the subagents audit eval methodology instead of code correctness.
 
@@ -31,6 +31,8 @@ This is the static-analysis cousin of `code-review`: same parallel-subagent orch
 ---
 
 ## Step 1: Confirm the target is a benchmark and locate its parts
+
+Target: $ARGUMENTS (path to the benchmark repo; if empty, assume the current directory).
 
 Establish the repo is gradable, then map where the audit will look. Run from the target repo root:
 

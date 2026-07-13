@@ -36,10 +36,11 @@ These are patterns I built for my own daily work and generalized for anyone to u
 
 ## Quick Start
 
-Prerequisites: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed.
+Prerequisites: [Claude Code](https://code.claude.com/docs/en/overview) installed.
 
 ```bash
 # 1. Copy a skill directory into your project
+mkdir -p your-project/.claude/skills
 cp -r ssot-check your-project/.claude/skills/ssot-check
 
 # 2. Use it
@@ -131,34 +132,24 @@ Abbreviated example output:
 
 Use before outreach, not for interview prep of an already-booked guest.
 
+### [Angel Diligence](angel-diligence/)
+
+Pre-investment research for angel checks. Give it a company name (plus optional deck notes, founder names, round details) and it runs parallel web research under strict citation rules, then writes a nine-section deal memo that separates verified facts from company claims. Two gates run before any research: a conflict-of-interest check against your employer, and a deal-structure question (direct, SPV, or secondary) that changes how the numbers read. The memo ends in a verdict scaffold, never an invest/pass recommendation — the human decides.
+
 ## How to Use
 
-### Quick start (single skill)
+Installation is covered in [Quick Start](#quick-start): copy the whole skill directory (not just SKILL.md — several skills carry `patterns/` and `examples/` files they reference) into `.claude/skills/`, and the directory name becomes the command. For all skills at once:
 
-1. Copy the `SKILL.md` from the skill directory you want
-2. Place it in your project (e.g., `skills/session-management/SKILL.md`)
-3. Reference it in your `CLAUDE.md` or `.claude/commands/` directory
-4. Use the slash command (e.g., `/start`, `/end`, `/reconcile`)
-
-### Full setup (all skills)
-
-1. Clone this repo or copy the skill directories into your project
-2. Add command routing files to `.claude/commands/` for each skill:
-
-```markdown
----
-name: start
-description: Start a session — load state and get a briefing
----
-
-Load and follow the instructions in `skills/session-management/SKILL.md`, section "/start — Begin Session".
+```bash
+mkdir -p your-project/.claude/skills
+for d in session-management code-review eval-integrity reconcile ssot-check recover skill-creator guest-circuit angel-diligence; do
+  cp -r "$d" your-project/.claude/skills/"$d"
+done
 ```
-
-3. Add the commands to your `CLAUDE.md` slash command table
 
 ### Works with other AI tools
 
-These skills follow the [agentskills.io](https://agentskills.io) format and work with Cursor, Windsurf, Cline, OpenHands, and 40+ other AI coding tools. Check each tool's docs for how to load custom instruction files.
+These skills follow the [agentskills.io](https://agentskills.io) format, which Cursor, OpenHands, and 40+ other Agent Skills-compatible tools support. Check each tool's docs for how to load skills.
 
 ## Related
 

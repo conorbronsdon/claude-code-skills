@@ -18,7 +18,7 @@ Each gap is rated **INVALIDATING** (a reviewer can throw out the published numbe
 
 Auditing is read-only. The skill never edits the benchmark, re-runs an eval, or touches a leaderboard. It offers fixes; applying them is the author's call.
 
-The checks were extracted from hardening a real agent benchmark, [cot-bench](https://github.com/conorbronsdon/cot-bench), for external grant review. cot-bench file names appear in the dimension briefs as examples of what good looks like, not as paths the skill expects to find in your repo.
+The checks were extracted from hardening a real agent benchmark, cot-bench (a private podcast-evals repo), for external grant review. cot-bench file names appear in the dimension briefs as examples of what good looks like, not as paths the skill expects to find in your repo.
 
 ## Setup
 

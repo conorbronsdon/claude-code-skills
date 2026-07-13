@@ -32,7 +32,7 @@ These rules override speed. A short memo with real citations beats a long memo w
 
 ### Step 1: Intake
 
-Collect what the user has. Required: company name. Optional: website, deck notes, founder names, round details (stage, raise amount, valuation, lead). Ask for the website if the name is ambiguous (many startups share names); if the user has only a deck, the website named in it is fine to use, per evidence rule 6. Note today's date at the top of your scratch state; it anchors every recency judgment.
+Start from $ARGUMENTS (company name, plus anything else passed inline). Collect what the user has. Required: company name. Optional: website, deck notes, founder names, round details (stage, raise amount, valuation, lead). Ask for the website if the name is ambiguous (many startups share names); if the user has only a deck, the website named in it is fine to use, per evidence rule 6. Note today's date at the top of your scratch state; it anchors every recency judgment.
 
 Two gates before any research starts:
 
