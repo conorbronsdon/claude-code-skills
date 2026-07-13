@@ -1,6 +1,7 @@
 ---
 name: ssot-check
 description: Single-source-of-truth drift auditor for documentation-heavy repos. Use when asked to "check for drift," "find copies of this number," "audit the docs for stale facts," or "set up an SSOT manifest." Finds facts hand-copied across files, builds a manifest of canonical locations, and verifies every copy still matches.
+argument-hint: "[discover|check]"
 ---
 
 # /ssot-check — Fact-Copy Drift Auditor

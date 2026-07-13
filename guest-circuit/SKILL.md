@@ -1,6 +1,7 @@
 ---
 name: guest-circuit
 description: Podcast-appearance research for guest booking. Use when asked to "map someone's podcast circuit," "where has X podcasted," "research X before guest outreach," or "find an unclaimed angle for X." Sweeps Podcast Index, web search, and the guest's own channels in parallel, then delivers a circuit report: appearance timeline, stump speech, unclaimed angles, receptiveness signal, and a specific pitch angle.
+argument-hint: "[guest-name] [anchor-fact]"
 ---
 
 # Guest Circuit — Podcast-Appearance Research for Booking

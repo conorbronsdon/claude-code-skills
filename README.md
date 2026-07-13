@@ -36,27 +36,24 @@ These are patterns I built for my own daily work and generalized for anyone to u
 
 ## Quick Start
 
-Prerequisites: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed, a project with a `.claude/commands/` directory.
+Prerequisites: [Claude Code](https://docs.anthropic.com/en/docs/claude-code) installed.
 
 ```bash
-# 1. Copy a skill into your project
-cp -r session-management/SKILL.md your-project/skills/session-management/SKILL.md
+# 1. Copy a skill directory into your project
+cp -r ssot-check your-project/.claude/skills/ssot-check
 
-# 2. Create a command routing file
-cat > your-project/.claude/commands/start.md << 'EOF'
----
-name: start
-description: Start a session — load state and get a briefing
----
-
-Load and follow the instructions in `skills/session-management/SKILL.md`, section "/start — Begin Session".
-EOF
-
-# 3. Use it
-# Type /start in Claude Code
+# 2. Use it
+# Type /ssot-check in Claude Code
 ```
 
-Repeat for each skill/command you want. See each skill's SKILL.md for the full setup details.
+That's the whole installation: the directory name becomes the command, supporting files (`patterns/`, `examples/`) ride along, and edits hot-reload within a session. Install to `~/.claude/skills/` instead to make a skill available across all your projects.
+
+Two variations:
+
+- **Multi-command skills** (session-management bundles `/start`, `/end`, `/update`, `/today`): create one thin `.claude/skills/<command>/SKILL.md` per command that says `Load and follow .claude/skills/session-management/SKILL.md, section "/start — Begin Session"` — or use `.claude/commands/` stub files, which still work but are the legacy form.
+- **Older setups**: if you already route through `.claude/commands/`, everything here still works that way; the stubs support the same frontmatter.
+
+See each skill's README for skill-specific setup details.
 
 ## Skills
 

@@ -1,6 +1,7 @@
 ---
 name: angel-diligence
 description: Pre-investment research and deal-memo generation for angel investors. Use when asked to "diligence [company]", "research this startup for an investment", "build a deal memo", or to prep for a founder call. Runs parallel web research with strict citation rules and produces a nine-section memo that separates verified facts from claims. Never outputs an invest/pass recommendation.
+argument-hint: "[company-name]"
 ---
 
 # /angel-diligence: Pre-Investment Deal Memo
@@ -93,17 +94,7 @@ Show the memo path and the Snapshot + Verdict scaffold inline. Flag the count of
 
 ## Setup
 
-Copy this directory into your project, then create `.claude/commands/angel-diligence.md`:
-
-```markdown
----
-name: angel-diligence
-description: Research a startup and build a cited deal memo
-allowed-tools: WebSearch, WebFetch, Read, Write, Task
----
-
-Load and follow the instructions in `skills/angel-diligence/SKILL.md`.
-```
+Copy this directory to `your-project/.claude/skills/angel-diligence` (or `~/.claude/skills/` for all projects) — that's the whole installation. The directory name becomes the `/angel-diligence` command, and `patterns/research-prompts.md` rides along.
 
 ## Cross-references
 

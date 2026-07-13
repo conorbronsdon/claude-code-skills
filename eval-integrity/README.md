@@ -22,21 +22,12 @@ The checks were extracted from hardening a real agent benchmark, [cot-bench](htt
 
 ## Setup
 
-Copy the skill into your project and add a command routing file:
+Copy the skill directory into your project — that's the whole installation:
 
 ```bash
-cp -r eval-integrity/ your-project/skills/eval-integrity/
-
-cat > your-project/.claude/commands/eval-integrity.md << 'EOF'
----
-name: eval-integrity
-description: Audit an LLM eval/benchmark repo for integrity and credibility practices
----
-
-Load and follow the instructions in `skills/eval-integrity/SKILL.md`.
-EOF
+cp -r eval-integrity your-project/.claude/skills/eval-integrity
 ```
 
-Then run `/eval-integrity` from (or pointed at) a benchmark repo.
+Then run `/eval-integrity` from (or pointed at) a benchmark repo. The directory name becomes the command; `patterns/dimension-prompts.md` rides along and loads only when the skill runs.
 
 See [SKILL.md](SKILL.md) for the full audit workflow and [patterns/dimension-prompts.md](patterns/dimension-prompts.md) for the paste-ready per-dimension audit briefs.

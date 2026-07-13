@@ -1,6 +1,7 @@
 ---
 name: session-management
 description: Structured session lifecycle for Claude Code — start, checkpoint, end, and daily heartbeat commands that maintain project state across conversations.
+disable-model-invocation: true
 ---
 
 # Session Management for Claude Code

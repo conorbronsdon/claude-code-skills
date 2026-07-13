@@ -1,6 +1,7 @@
 ---
 name: code-review
 description: Multi-agent deep review for code PRs in any repo. Use when asked to "deep review this PR," "multi-agent review," "review #N with subagents," "thorough review of this branch," or "is this PR ready to merge." Orchestrates Copilot + parallel subagents (adversarial, operational, reference-comparison) with scope-based escalation, stale-finding triage, and a hard iteration cap.
+argument-hint: "[pr-number-or-branch]"
 ---
 
 # Code Review — Multi-Agent PR Review
