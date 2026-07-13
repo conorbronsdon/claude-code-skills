@@ -162,6 +162,7 @@ These skills follow the [agentskills.io](https://agentskills.io) format, which C
 
 ## Related
 
+- **[agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder)** — Standalone home of the skill-creator here: adds a machine-checkable validator and weekly spec-drift CI
 - **[AI Tools for Creators](https://github.com/conorbronsdon/ai-tools-for-creators)** — Collection of skills, MCP servers, and workflow tools
 - **[avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing)** — Catch and fix AI writing patterns (90+ checks)
 - **[AI Learning Resources](https://github.com/conorbronsdon/ai-learning-resources)** — Curated learning path from "what is AI?" to building with Claude Code
