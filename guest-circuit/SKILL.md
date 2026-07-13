@@ -14,6 +14,8 @@ This skill maps the circuit and produces a report you can act on: appearance tim
 
 ---
 
+**Invocation:** deliberately model-invocable — "research X before outreach" is the trigger. It spends web-search calls, so invoke consciously on big sweeps.
+
 ## When to Use
 
 - "Map [person]'s podcast circuit" / "where has [person] podcasted?"

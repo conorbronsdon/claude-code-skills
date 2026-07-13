@@ -10,6 +10,8 @@ Documentation-heavy repos repeat facts. An episode count lives in a README, then
 
 It complements `/reconcile`. Reconcile catches multi-session drift in state files. This skill catches fact-copy drift across documents: the same number or string living in several files, where exactly one file is allowed to be right.
 
+**Invocation:** deliberately model-invocable — checks are read-only and belong in pre-commit moments; fixes are proposed, never auto-applied.
+
 ## When to Use
 
 - **Discover mode**: first run on a repo, or after adding a new doc surface (a media kit, a landing page, a pricing page)

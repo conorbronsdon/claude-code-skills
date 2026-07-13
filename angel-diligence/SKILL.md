@@ -8,6 +8,8 @@ argument-hint: "[company-name]"
 
 Given a company name (plus optional deck notes, founder names, round details), research the company from public sources and produce a structured deal memo. Every factual claim is cited. Anything unverifiable is labeled. The memo ends in a verdict scaffold, not a recommendation. The human decides.
 
+**Invocation:** deliberately model-invocable — "diligence [company]" is the trigger. Research is read-only; deck contents never leave the session.
+
 ## When to Use
 
 - "Diligence [company]" / "research [company] for an angel check"

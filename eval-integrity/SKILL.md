@@ -16,6 +16,8 @@ This is the static-analysis cousin of `code-review`: same parallel-subagent orch
 
 ---
 
+**Invocation:** deliberately model-invocable — read-only audit; it reports and offers fixes, never edits the benchmark.
+
 ## When to Use
 
 - Before submitting a benchmark to a grant, conference, or public leaderboard.

@@ -7,6 +7,8 @@ description: Scan for orphaned worktrees and stale branches after crashes or aba
 
 Scan for orphaned worktrees, stale branches, and partial work left behind by crashed or abandoned Claude Code sessions. Read-only by default — reports findings and waits for approval before cleanup.
 
+**Invocation:** deliberately model-invocable — scanning is read-only. Every cleanup action is gated on explicit user approval.
+
 ## When to Use
 
 - After a system crash or forced session termination
@@ -16,6 +18,15 @@ Scan for orphaned worktrees, stale branches, and partial work left behind by cra
 
 ## Instructions
 
+### 0. Detect the default branch
+
+Don't assume `main`. Resolve it once and use it everywhere below:
+
+```bash
+DEFAULT=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+DEFAULT=${DEFAULT:-$(git remote show origin | sed -n 's/.*HEAD branch: //p')}
+```
+
 ### 1. List all worktrees
 
 ```bash
@@ -23,8 +34,8 @@ git worktree list --porcelain
 ```
 
 Identify:
-- **Active worktrees**: Have a running session
-- **Orphaned worktrees**: Directory exists but no session is using it
+- **Recently touched worktrees**: files or `.git` metadata modified in the last hours — treat as *possibly live*. `git worktree list` cannot tell whether a session is actually running; without a lock/heartbeat file or process evidence, classify as **unknown activity** and never as orphaned.
+- **Candidate-orphaned worktrees**: no recent modification and no activity signal — proceed to inspection, still gated on user approval before any cleanup
 - **Stale entries**: Git tracks a worktree but the directory is gone
 
 ### 2. Inspect orphaned worktrees
@@ -35,7 +46,7 @@ For each orphaned worktree:
 git -C <worktree-path> status --short
 git -C <worktree-path> branch --show-current
 git -C <worktree-path> log --oneline -3
-git log main..<branch-name> --oneline
+git log "$DEFAULT"..<branch-name> --oneline
 ```
 
 Classify each as:
@@ -47,13 +58,13 @@ Classify each as:
 ### 3. List stale branches
 
 ```bash
-git branch --no-merged main
+git branch --no-merged "$DEFAULT"
 git remote prune origin --dry-run
 git for-each-ref --sort=-committerdate --format='%(refname:short) %(committerdate:relative) %(subject)' refs/heads/
 ```
 
 Classify:
-- **MERGED**: Already in main — safe to delete
+- **MERGED**: Already in the default branch — safe to delete
 - **STALE**: Last commit >7 days ago, not merged — flag for review
 - **ACTIVE**: Recent commits — leave alone
 

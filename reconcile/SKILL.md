@@ -7,14 +7,22 @@ description: Tripwire check for multi-session drift. Scans state files, recent c
 
 When running multiple Claude Code sessions in parallel (especially with worktrees), files can drift out of sync. This skill scans for inconsistencies and proposes fixes.
 
+**Invocation:** deliberately model-invocable — the scan is read-only and auto-triggering when drift smells is the point. Anything that changes files is proposed, never applied.
+
 ## When to Use
 
-- After merging worktree branches back to main
+- After merging worktree branches back to the default branch
 - When something "feels off" after parallel work
 - After a crash where multiple sessions were open
 - As a periodic sanity check during heavy parallel workflows
 
 ## Instructions
+
+### 0. Detect the default branch
+
+```bash
+DEFAULT=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+```
 
 ### 1. Scan recent commit history across all branches
 
@@ -32,7 +40,7 @@ Look for:
 For each file modified on multiple branches, diff the versions:
 
 ```bash
-git diff main..<branch> -- <file>
+git diff "$DEFAULT"..<branch> -- <file>
 ```
 
 Flag files where:
@@ -91,6 +99,6 @@ Present each fix individually. Wait for approval before applying. Common fixes:
 ## Design Principles
 
 - **Read-only by default.** Report, wait for approval.
-- **Trust recent over old.** When two versions conflict, the more recent edit is usually correct.
+- **Prefer evidence of intent over timestamps.** When two versions conflict, look at which change the surrounding work depends on (commit messages, linked edits, whether other files reference the new value). A stale session can easily produce the *newer* timestamp. Use recency only as a tie-breaker when intent is unreadable.
 - **Preserve intent.** Don't auto-resolve — different sessions may have had different goals.
 - **Fast.** Git commands and file reads only. Under 30 seconds for a full scan.

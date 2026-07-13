@@ -12,6 +12,8 @@ If you have access to a paid multi-agent review service (e.g. `/ultrareview` in 
 
 ---
 
+**Invocation:** deliberately model-invocable — "review this PR" phrasing is the trigger. Pushes and issue-creation inside the flow are confirmation-gated.
+
 ## Step 1: Assess PR Scope
 
 The review target is $ARGUMENTS (a PR number, branch, or URL). If empty, infer it from the conversation or ask.

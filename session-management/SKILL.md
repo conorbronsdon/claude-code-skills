@@ -8,6 +8,8 @@ disable-model-invocation: true
 
 A system of four commands that give Claude Code a memory across sessions. Instead of starting every conversation cold, these skills maintain state files that capture what you're working on, what decisions you've made, and what's next.
 
+**Invocation:** user-only (`disable-model-invocation: true`) — session lifecycle is timed by you, and the flag keeps this 300-line skill out of ambient context.
+
 ## Why This Exists
 
 Claude Code conversations are ephemeral — close the terminal and the context is gone. These skills solve that by:
