@@ -2,7 +2,7 @@
 name: skill-creator
 description: Generate a new Claude Code skill from a plain-language description — decides invocation control (disable-model-invocation vs user-invocable), arguments (argument-hint, $ARGUMENTS), and context cost, then scaffolds and tests it.
 ---
-<!-- x-source: agent-skill-builder/SKILL.md @ 1337c4f -->
+<!-- x-source: agent-skill-builder/SKILL.md @ 9f0a6e8 -->
 
 # skill-creator — Build New Skills Fast
 
@@ -69,6 +69,8 @@ Body structure: short purpose line, "When to Use" bullets, numbered step-by-step
 - [ ] Confirmation gate on anything that changes external state (git push, API calls, file deletes)
 
 ### 4. Install it
+
+**Before writing, check the target path is clear** — if `.claude/skills/<skill-name>/SKILL.md` already exists, stop and confirm an overwrite rather than clobbering it silently.
 
 `.claude/skills/<skill-name>/SKILL.md` is the whole installation — the directory name becomes the command, supporting files live alongside, and changes hot-reload within a session. No routing stub or registry edit is needed. (`.claude/commands/` files still work, but they're the legacy form.)
 
