@@ -3,6 +3,7 @@ name: eval-integrity
 description: Audit an LLM evaluation or benchmark repo for integrity and credibility practices. Use when asked to "audit my benchmark," "is my eval trustworthy," "check my leaderboard for contamination," "review this benchmark's methodology," or "what would a reviewer attack in my eval." Greps the target repo for evidence across seven dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions) and emits a scored report with file:line evidence, severity, and concrete fixes.
 argument-hint: "[path-to-benchmark-repo]"
 ---
+<!-- x-source: eval-integrity/SKILL.md @ ef497f9 -->
 
 # eval-integrity — Benchmark Credibility Audit
 

@@ -2,6 +2,8 @@
 
 ![eval-integrity demo](docs/demo.gif)
 
+Canonical home is now [eval-integrity](https://github.com/conorbronsdon/eval-integrity) — standalone with the methodology split into 36 scoreable sub-checks, a JSON result schema, and three audit fixtures. This compact copy tracks it.
+
 Audit an LLM evaluation or benchmark repo for the integrity practices that make a published score mean what it appears to mean. Run with `/eval-integrity` pointed at a benchmark repo. It greps the repo for evidence across seven dimensions, spawns one auditor subagent per dimension in parallel (or runs the briefs inline sequentially when no subagent tool exists), and emits a scored report: per-dimension PRESENT / PARTIAL / ABSENT, with `file:line` evidence, a severity tag, and a concrete fix for every gap.
 
 The seven dimensions:

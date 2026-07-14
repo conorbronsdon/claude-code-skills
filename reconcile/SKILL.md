@@ -2,6 +2,7 @@
 name: reconcile
 description: Tripwire check for multi-session drift. Scans state files, recent commits, and file conflicts caused by parallel Claude Code sessions.
 ---
+<!-- x-source: agent-workspace/SKILL.md @ 7b7211e -->
 
 # /reconcile — Multi-Session Drift Check
 

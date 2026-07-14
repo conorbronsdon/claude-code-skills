@@ -3,6 +3,7 @@ name: ssot-check
 description: Single-source-of-truth drift auditor for documentation-heavy repos. Use when asked to "check for drift," "find copies of this number," "audit the docs for stale facts," or "set up an SSOT manifest." Finds facts hand-copied across files, builds a manifest of canonical locations, and verifies every copy still matches.
 argument-hint: "[discover|check]"
 ---
+<!-- x-source: ssot-check/SKILL.md @ 642b5d6 -->
 
 # /ssot-check — Fact-Copy Drift Auditor
 
@@ -85,7 +86,7 @@ Schema rules:
 
 A copy — or the canonical itself — may live in a sibling local clone (marketing pages often do). Use a relative path that escapes the repo root, like `../cot-sponsor-page/index.html`. Three rules:
 
-1. **Pull the sibling fresh before checking.** Run `git -C ../cot-sponsor-page pull --rebase` first, or you are checking a stale copy. If the sibling has uncommitted changes to tracked files, or the pull fails, report every fact touching that repo as UNVERIFIED rather than guessing. Untracked files alone do not block the pull and do not count as dirty.
+1. **Never mutate the sibling to check it.** Run `git -C ../cot-sponsor-page fetch` and compare against the remote ref (`git show origin/HEAD:index.html`) when freshness matters; read the working tree as-is otherwise. Report local divergence between the sibling's tree and its remote as a finding. Do not pull, rebase, or otherwise modify a repo you are only auditing — if you can't establish a fresh value read-only, report the fact as UNVERIFIED rather than guessing.
 2. **Fixes to a sibling repo are a separate commit.** Propose the edit, but note it lands in the other repo with its own commit and deploy path.
 3. **A cross-repo canonical is legitimate.** When the audited repo's own docs delegate a surface to the sibling ("the media kit we send sponsors is the live page"), the sibling file is the canonical and the audited repo holds the copies. The pull-fresh rule applies doubly: a stale canonical poisons every comparison for that fact.
 

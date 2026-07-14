@@ -2,6 +2,7 @@
 name: recover
 description: Scan for orphaned worktrees and stale branches after crashes or abandoned sessions. Offers safe cleanup options.
 ---
+<!-- x-source: agent-workspace/SKILL.md @ 7b7211e -->
 
 # /recover — Worktree & Branch Cleanup
 
