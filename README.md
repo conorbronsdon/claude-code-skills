@@ -16,7 +16,7 @@ Production-tested skills for Claude Code. Drop-in markdown files that teach Clau
 ---
 
 
-These are patterns I built for my own daily work and generalized for anyone to use. They work with Claude Code out of the box and follow the [agentskills.io](https://agentskills.io) standard where applicable.
+These are patterns I built for my own daily work and generalized for anyone to use. They work with Claude Code out of the box, install into Codex, Cursor, and OpenCode with one flag (see [Other agents](#other-agents)), and follow the [agentskills.io](https://agentskills.io) standard where applicable.
 
 ## At a Glance
 
@@ -36,7 +36,7 @@ These are patterns I built for my own daily work and generalized for anyone to u
 
 ## Quick Start
 
-Prerequisites: [Claude Code](https://code.claude.com/docs/en/overview) installed.
+A skill is a markdown file. Installing one is copying a directory into wherever your agent reads skills from.
 
 ```bash
 # 1. Copy a skill directory into your project
@@ -44,7 +44,7 @@ mkdir -p your-project/.claude/skills
 cp -r ssot-check your-project/.claude/skills/ssot-check
 
 # 2. Use it
-# Type /ssot-check in Claude Code
+# Type /ssot-check in your agent
 ```
 
 That's the whole installation: the directory name becomes the command, supporting files (`patterns/`, `examples/`) ride along, and edits hot-reload within a session. Install to `~/.claude/skills/` instead to make a skill available across all your projects.
@@ -55,8 +55,29 @@ Or use the bundled installer, which also handles updates and drift checks agains
 ./install.sh install ssot-check ~/my-project     # copy in
 ./install.sh diff    ssot-check ~/my-project     # what changed upstream since you installed?
 ./install.sh update  ssot-check ~/my-project     # refresh
-TARGET_SCOPE=user ./install.sh install reconcile # install to ~/.claude/skills instead
+TARGET_SCOPE=user ./install.sh install reconcile # install to the user-level skills dir
 ```
+
+### Other agents
+
+Every skill here is plain markdown with no Claude-specific syntax, so it runs anywhere that reads a skill file as a procedure. The installer knows where each agent looks:
+
+```bash
+./install.sh agents                                    # show the target directories
+AGENT=codex ./install.sh install ssot-check ~/my-project
+```
+
+| `AGENT=` | Project directory | User directory |
+|---|---|---|
+| `claude` (default) | `.claude/skills` | `~/.claude/skills` |
+| `codex` | `.agents/skills` | `~/.codex/skills` |
+| `cursor` | `.cursor/skills` | `~/.cursor/skills` |
+| `opencode` | `.opencode/skills` | `~/.opencode/skills` |
+| `generic` | `.agents/skills` | `~/.agents/skills` |
+
+Omitting `AGENT` behaves exactly as before. An unrecognised value exits `1` without writing anything, rather than quietly falling back to Claude.
+
+Two caveats worth stating plainly: skills that shell out to `gh` need the GitHub CLI whatever the agent, and `/`-prefixed invocation is a Claude Code convention — other agents may want "use the ssot-check skill" instead.
 
 Two variations:
 
