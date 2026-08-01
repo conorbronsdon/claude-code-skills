@@ -1,12 +1,12 @@
 <div align="center">
 
-# Claude Code Skills
+# agent-skills
 
-Production-tested skills for Claude Code. Drop-in markdown files that teach Claude specific workflows.
+Production-tested agent skills. Drop-in markdown files that teach a coding agent a specific workflow — Claude Code, Codex, Cursor, or OpenCode.
 
-[![GitHub stars](https://img.shields.io/github/stars/conorbronsdon/claude-code-skills?style=social)](https://github.com/conorbronsdon/claude-code-skills/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/conorbronsdon/agent-skills?style=social)](https://github.com/conorbronsdon/agent-skills/stargazers)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
-[![Podcast](https://img.shields.io/badge/Podcast-Chain_of_Thought-purple?style=flat-square)](https://chainofthought.show/?utm_source=github&utm_medium=referral&utm_campaign=repo-readme&utm_content=claude-code-skills)
+[![Podcast](https://img.shields.io/badge/Podcast-Chain_of_Thought-purple?style=flat-square)](https://chainofthought.show/?utm_source=github&utm_medium=referral&utm_campaign=repo-readme&utm_content=agent-skills)
 [![X](https://img.shields.io/badge/X-@ConorBronsdon-black?style=flat-square&logo=x)](https://x.com/ConorBronsdon)
 
 <img src="docs/demo.gif" alt="A representative /code-review session: the orchestrator sizes the PR as high-stakes, spawns adversarial and operational subagents in parallel alongside Copilot, then triages the findings" width="800">
@@ -194,7 +194,7 @@ Found a bug or have an improvement? Open an issue or PR. If you've built a skill
 
 ## About
 
-Built by [Conor Bronsdon](https://github.com/conorbronsdon). These skills were developed through daily use while running [Chain of Thought](https://chainofthought.show/?utm_source=github&utm_medium=referral&utm_campaign=repo-readme&utm_content=claude-code-skills), a podcast about AI infrastructure and developer tools.
+Built by [Conor Bronsdon](https://github.com/conorbronsdon). These skills were developed through daily use while running [Chain of Thought](https://chainofthought.show/?utm_source=github&utm_medium=referral&utm_campaign=repo-readme&utm_content=agent-skills), a podcast about AI infrastructure and developer tools.
 
 ---
 
