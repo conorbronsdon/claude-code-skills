@@ -31,8 +31,14 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [Skill Creator](skill-creator/) | `/skill-creator` | Skill generators rot and skip invocation/context decisions — this scaffolds against the live spec |
 | [Guest Circuit](guest-circuit/) | `/guest-circuit` | Pitching a podcast guest blind re-asks what three other shows asked — this maps their circuit and finds the unclaimed angle |
 | [Angel Diligence](angel-diligence/) | `/angel-diligence` | Startup diligence is ad hoc and easy to hallucinate; this produces a cited deal memo with a verdict scaffold, not a recommendation |
-| [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 53 pattern categories across vocabulary, structure, rhythm |
+| [avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing) ↗ | `/clean-ai-writing` | AI writing has tells — 61 pattern categories across vocabulary, structure, rhythm |
 | [demo-gif-skill](https://github.com/conorbronsdon/demo-gif-skill) ↗ | `"add a demo gif"` | Demo GIFs rot the moment a tool's output changes — this scripts a reproducible one (vhs/Playwright) into any README |
+| [repo-audit](https://github.com/conorbronsdon/repo-audit) ↗ | `"audit this repo"` | A README claims something is blocked; nothing blocks it — this finds the mechanism behind every claim and grades it Enforced, Advisory, or Guidance |
+| [agent-memory-kit](https://github.com/conorbronsdon/agent-memory-kit) ↗ | `/dream rot`, `/dream lint` | Agent memory accumulates and never forgets — this adds the curation pass that catches rot and contradictions before the agent is confidently wrong |
+| [agent-workspace](https://github.com/conorbronsdon/agent-workspace) ↗ | `/start`, `/end`, `/update`, `/today`, `/reconcile`, `/recover` | Standalone package of the four session-management commands plus reconcile and recover, with a configurable state layout (`workspace.yaml`) |
+| [agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder) ↗ | `/skill-creator` | Hardened home of this repo's Skill Creator — adds a machine-checkable validator and weekly spec-drift CI |
+
+Rows marked ↗ live in their own repo. Everything else installs from this one.
 
 ## Quick Start
 
@@ -97,7 +103,7 @@ A system of four commands (`/start`, `/end`, `/update`, `/today`) that give Clau
 - **`/update`** — Mid-session checkpoint (quick save)
 - **`/today`** — Morning heartbeat: staleness check, deadlines, memory curation
 
-Includes setup guide with the required file structure and minimal starter templates.
+Includes setup guide with the required file structure and minimal starter templates. These four, plus Reconcile and Recover, have graduated into [agent-workspace](https://github.com/conorbronsdon/agent-workspace) — take that one if you want the configurable state layout, this one if you want the four commands with no config.
 
 ### [Code Review](code-review/)
 
@@ -109,7 +115,7 @@ Use for: high-stakes PRs touching auth, payment, crypto, deploy configs, or exte
 
 Credibility audit for LLM evaluation and benchmark repos. Greps the target repo for evidence across seven integrity dimensions (pre-registration, contamination, holdout hygiene, judge validity, statistical honesty, reproducibility, leaderboard exclusions), spawns one auditor subagent per dimension in parallel, and emits a scored report: PRESENT / PARTIAL / ABSENT with `file:line` evidence and a concrete fix for every gap. Each gap is tagged INVALIDATING (a reviewer can throw out the published number) or HARDENING. Read-only — it reports and offers fixes, never edits the benchmark or re-runs an eval. The checks were extracted from hardening a real agent benchmark for external grant review.
 
-Use before submitting a benchmark to a grant, conference, or public leaderboard, or whenever someone says "I don't trust those numbers."
+Use before submitting a benchmark to a grant, conference, or public leaderboard, or whenever someone says "I don't trust those numbers." The graduated version at [eval-integrity](https://github.com/conorbronsdon/eval-integrity) splits the seven dimensions into 36 scoreable sub-checks, adds a JSON result schema for CI trend-tracking, and ships three fixture benchmarks.
 
 ### [Reconcile](reconcile/)
 
@@ -121,7 +127,7 @@ Use after merging worktree branches, after crashes, or whenever something feels 
 
 Drift auditor for facts that are canonical in one file but hand-copied into others (episode counts, prices, subscriber numbers, versions). Discover mode scans the repo for drift-prone values and proposes a `.ssot.yaml` manifest mapping each fact to its canonical file and known copies, with regex capture groups so values can be extracted and compared. Check mode reads the manifest, verifies every copy against the canonical value, and reports IN SYNC / DRIFTED / CANONICAL MOVED with `file:line` evidence and proposed diffs. Never auto-applies fixes. Handles cross-repo copies (a landing page in a sibling clone) and ends with a one-line summary built for a pre-commit habit.
 
-Use before commits that touch docs, after updating any canonical number, or on any repo with a "grep for other files with this number" rule that people forget to follow.
+Use before commits that touch docs, after updating any canonical number, or on any repo with a "grep for other files with this number" rule that people forget to follow. The graduated version at [ssot-check](https://github.com/conorbronsdon/ssot-check) replaces the agent-driven check with a deterministic stdlib CLI, plus a pre-commit hook and a GitHub Action.
 
 ### [Recover](recover/)
 
@@ -183,9 +189,23 @@ These skills follow the [agentskills.io](https://agentskills.io) format, which C
 
 ## Related
 
+Skills that graduated out of this repo into their own:
+
+- **[agent-workspace](https://github.com/conorbronsdon/agent-workspace)** — Session management, reconcile, and recover as one package with a configurable state layout
 - **[agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder)** — Standalone home of the skill-creator here: adds a machine-checkable validator and weekly spec-drift CI
+- **[eval-integrity](https://github.com/conorbronsdon/eval-integrity)** — The benchmark audit as 36 scoreable sub-checks, with a JSON result schema and fixtures
+- **[ssot-check](https://github.com/conorbronsdon/ssot-check)** — The drift auditor as a deterministic CLI, pre-commit hook, and GitHub Action
+
+Skills built standalone:
+
+- **[repo-audit](https://github.com/conorbronsdon/repo-audit)** — Check a repo's claims against its own code, or get it ready to open-source
+- **[agent-memory-kit](https://github.com/conorbronsdon/agent-memory-kit)** — Capture, recall, and a read-only curator that finds rot in agent memory
+- **[avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing)** — Catch and fix AI writing patterns (61 pattern categories)
+- **[demo-gif-skill](https://github.com/conorbronsdon/demo-gif-skill)** — Add a reproducible demo GIF to any repo's README
+
+Elsewhere:
+
 - **[AI Tools for Creators](https://github.com/conorbronsdon/ai-tools-for-creators)** — Collection of skills, MCP servers, and workflow tools
-- **[avoid-ai-writing](https://github.com/conorbronsdon/avoid-ai-writing)** — Catch and fix AI writing patterns (53 pattern categories)
 - **[AI Learning Resources](https://github.com/conorbronsdon/ai-learning-resources)** — Curated learning path from "what is AI?" to building with Claude Code
 
 ## Contributing
