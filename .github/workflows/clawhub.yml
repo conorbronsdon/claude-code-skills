@@ -41,6 +41,9 @@ on:
       - "ssot-check/**"
       - "scripts/clawhub-sync.py"
       - ".github/workflows/clawhub.yml"
+      # Line-ending normalization changes the bytes CI checks out, and the
+      # fingerprint is over bytes — editing it can change what publishes.
+      - ".gitattributes"
   pull_request:
     paths:
       - "clawhub.yml"
@@ -55,6 +58,9 @@ on:
       - "ssot-check/**"
       - "scripts/clawhub-sync.py"
       - ".github/workflows/clawhub.yml"
+      # Line-ending normalization changes the bytes CI checks out, and the
+      # fingerprint is over bytes — editing it can change what publishes.
+      - ".gitattributes"
   workflow_dispatch:
     inputs:
       dry_run:
