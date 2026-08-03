@@ -13,7 +13,9 @@ Documentation-heavy repos repeat facts. An episode count lives in a README, then
 
 It complements `/reconcile`. Reconcile catches multi-session drift in state files. This skill catches fact-copy drift across documents: the same number or string living in several files, where exactly one file is allowed to be right.
 
-**Invocation:** deliberately model-invocable — checks only read; nothing in this skill writes. That holds for sibling repos too: this skill never fetches, pulls, commits, or otherwise modifies a repo it is auditing. Fixes are proposed as diffs, never auto-applied. The single operation that would touch a repo other than the one being audited — `git fetch` in a sibling clone, to compare against a live remote — is **off by default** and requires an explicit request from the user in that session. Absent that request, freshness is established from refs already on disk, or the fact is reported UNVERIFIED.
+**Invocation:** deliberately model-invocable — it belongs in pre-commit moments. No file is ever edited: fixes are proposed as diffs, never auto-applied. No repo being audited is ever modified — no pull, no rebase, no checkout, no commit, in this repo or a sibling.
+
+Exactly one operation writes anything at all, and it is worth stating plainly rather than burying: `git fetch` in a sibling clone, which updates that clone's remote-tracking refs and `FETCH_HEAD` so a value can be compared against a live remote. It touches no working tree and no file. It is **off by default** and runs only on an explicit request from the user in that session. Absent that request, freshness comes from refs already on disk, or the fact is reported UNVERIFIED.
 
 ## When to Use
 
@@ -160,7 +162,7 @@ Goal: verify every copy still matches its canonical value. Main-thread, fast, re
 
 1. **Read `.ssot.yaml`.** If it does not exist, switch to discover mode.
 
-2. **Establish freshness for sibling repos read-only.** For each cross-repo path in the manifest, read the sibling's working tree, and — when freshness matters — compare against the remote-tracking ref already on disk via `git show`, noting its tip date (see the cross-repo rules above). Do not fetch and do not pull. If neither the working tree nor an existing remote-tracking ref yields a value you can stand behind, mark those facts **UNVERIFIED** and continue with the rest of the manifest.
+2. **Establish freshness for sibling repos read-only.** For each cross-repo path in the manifest, read the sibling's working tree, and — when freshness matters — compare against the remote-tracking ref already on disk via `git show`, noting its tip date (see the cross-repo rules above). Do not fetch and do not pull — unless the user explicitly asked for a live-remote comparison this session, which is the one exception in cross-repo rule 1. If neither the working tree nor an existing remote-tracking ref yields a value you can stand behind, mark those facts **UNVERIFIED** and continue with the rest of the manifest.
 
 3. **For each fact:**
    - Open the canonical file, apply the canonical pattern, extract the captured value.
