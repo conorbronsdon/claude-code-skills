@@ -1,12 +1,15 @@
 name: Publish to ClawHub
 
 # Mirrors the publish.yml pattern used across the MCP servers: the step is gated
-# on its own registry-version check, so a workflow_dispatch performs a catch-up
-# without needing a version bump to trigger it.
+# on its own registry check, so a workflow_dispatch performs a catch-up without
+# needing a version bump to trigger it.
 #
 # A skill publishes when its `version` in clawhub.yml differs from what the
-# registry holds. Forgetting the bump means the change does not ship — the run
-# logs every skill it skipped and why, so that is visible rather than silent.
+# registry holds. A push that changes nothing publishes nothing — the gate is a
+# `clawhub skill publish --dry-run` probe, which reports both the published
+# version and whether the folder's content fingerprint already matches it.
+# Changing a skill without bumping its manifest version does not ship, and the
+# run logs a warning naming the skill, so that is visible rather than silent.
 #
 # Setup (once): add a CLAWHUB_TOKEN repository secret. Get it from a machine
 # where `clawhub login` has been completed:
@@ -14,21 +17,48 @@ name: Publish to ClawHub
 #     clawhub token
 #
 # It is a long-lived bearer token with publish rights to the conorbronsdon
-# handle. Rotate with `clawhub logout && clawhub login` and update the secret.
+# handle, stored in plaintext at %APPDATA%\clawhub\config.json (POSIX:
+# ~/.config/clawhub/config.json). Rotate with `clawhub logout && clawhub login`
+# and update the secret. Never echo it — the publish job masks it as a secret,
+# but a `set -x` or a `clawhub token` call in a step would defeat that.
 
 on:
   push:
     branches: [main]
+    # Only the things that can change what gets published: the skill folders,
+    # the manifest, and the machinery itself. A README or docs-only commit does
+    # not start a run.
     paths:
       - "clawhub.yml"
-      - "*/SKILL.md"
-      - "*/**"
-      - "!README.md"
-      - "!.github/**"
+      - "angel-diligence/**"
+      - "code-review/**"
+      - "eval-integrity/**"
+      - "guest-circuit/**"
+      - "reconcile/**"
+      - "recover/**"
+      - "session-management/**"
+      - "skill-creator/**"
+      - "ssot-check/**"
+      - "scripts/clawhub-sync.py"
+      - ".github/workflows/clawhub.yml"
+  pull_request:
+    paths:
+      - "clawhub.yml"
+      - "angel-diligence/**"
+      - "code-review/**"
+      - "eval-integrity/**"
+      - "guest-circuit/**"
+      - "reconcile/**"
+      - "recover/**"
+      - "session-management/**"
+      - "skill-creator/**"
+      - "ssot-check/**"
+      - "scripts/clawhub-sync.py"
+      - ".github/workflows/clawhub.yml"
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Print what would publish without publishing"
+        description: "Probe the registry and print what would publish, without publishing"
         type: boolean
         default: false
 
@@ -39,15 +69,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Runs on pull requests, with no token and no network calls to the registry.
+  # Its job is to keep a credential-shaped file from reaching main at all: a
+  # publish uploads every text file in the skill folder, `.env` included, and it
+  # is not undoable — a soft delete cannot un-download what was public in the
+  # meantime. Catching that at merge time is cheaper than catching it at publish
+  # time, so the same scan runs in both places.
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate manifest and scan for credential-shaped files
+        run: python3 scripts/clawhub-sync.py --check
+
   publish:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
         with:
-          # clawhub-sync.py pins --source-commit from HEAD, and a shallow
-          # checkout still resolves that correctly.
+          # clawhub-sync.py pins --source-commit from HEAD, which a shallow
+          # checkout still resolves correctly.
           fetch-depth: 1
 
       - uses: actions/setup-node@v4
@@ -68,9 +115,17 @@ jobs:
           clawhub login --token "$CLAWHUB_TOKEN" --no-browser
           clawhub whoami
 
+      # The secret scan runs inside clawhub-sync.py, across every skill in the
+      # manifest, before the first publish call — and it fails the run rather
+      # than skipping the offending skill, so nothing ships from a tree holding
+      # a credential-shaped file.
       - name: Publish changed skills
+        env:
+          # Via env rather than interpolated into the script body. `inputs` is
+          # empty on a push event, so this is "" there and the publish runs.
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
-          if [ "${{ inputs.dry_run }}" = "true" ]; then
+          if [ "$DRY_RUN" = "true" ]; then
             python3 scripts/clawhub-sync.py --dry-run
           else
             python3 scripts/clawhub-sync.py

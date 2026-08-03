@@ -1,26 +1,53 @@
 #!/usr/bin/env python3
 """Publish this repo's skills to clawhub.ai, skipping anything already current.
 
-Reads clawhub.yml, asks the registry what version it holds for each slug, and
-shells out to `clawhub skill publish` only where they differ. Every skipped
-skill is logged with the reason, so a run that publishes nothing still says why.
+Reads clawhub.yml, asks the registry what it already holds for each slug, and
+shells out to `clawhub skill publish` only where the repo and the registry
+disagree. Every skipped skill is logged with its reason, so a run that publishes
+nothing still says why.
 
-Two behaviors this exists to prevent, both read off the CLI source (v0.23.1):
+Idempotency is the whole point: a push that changes nothing must publish
+nothing. Two CLI behaviors, both read off v0.23.1 and confirmed against the live
+registry on 2026-08-03, decide how that is done.
 
   * `clawhub skill publish` ignores any version in SKILL.md frontmatter and
     patch-bumps from whatever the registry holds. Omit --version and the repo's
     version and ClawHub's diverge on the first release and never reconverge.
-  * `clawhub sync` batches but cannot set categories, so everything it ships
-    lands in the `other` bucket.
+    So the publish call always passes --version from the manifest.
 
-The --source-* flags below are passed because they are free, not because they
-work. Verified 2026-08-03: `links.source` is null for every natively published
-skill on the registry (0 of 390 sampled), and stays null after a publish that
-passes all four flags. Never gate this script, or a verification step, on them.
+  * `clawhub skill publish --dry-run --json` reports `latestVersion` as a plain
+    semver string and a `status` of "unchanged" when the folder's content
+    fingerprint already matches a published version. That probe is the gate.
+    It returns before the CLI requires a token and before it POSTs anything
+    (dist/cli/commands/publish.js: the --dry-run branch returns at the
+    "would-publish" result, above `requireAuthToken()` and the form upload).
+
+The probe deliberately omits --version, --categories, and --topics. The CLI
+only reports "unchanged" when neither an explicit version nor explicit catalog
+metadata was passed (`hasExplicitCatalogMetadata` in publish.js); passing them
+suppresses the fingerprint check and makes every probe read "would-publish".
+
+The probe also resolves the slug against the authenticated owner rather than
+globally. That matters: a bare `skill-creator` resolves to an unrelated listing
+with ~98k downloads, and a gate reading that would compare our version against a
+stranger's. Verified — the probe returns our 1.0.0 for that slug, not theirs.
+
+`clawhub inspect` is not used. Its `--json` returns `latestVersion` as an object
+(`{"version": "1.0.0", ...}`), not a string, and reading it as a string silently
+yields None for every published skill — which reads as "unpublished" and
+republishes all nine on every run. Different endpoint, different projection; the
+probe above is the same code path that performs the publish, so the version it
+reports is the one the publish will actually be compared against.
+
+The --source-* flags are passed because they are free, not because they work.
+Verified 2026-08-03: `links.source` is null for every natively published skill
+on the registry (0 of 390 sampled) and stays null after a publish that passes
+all four. Never gate this script, or a verification step, on them.
 
 Usage:
-    python3 scripts/clawhub-sync.py --dry-run
-    python3 scripts/clawhub-sync.py
+    python3 scripts/clawhub-sync.py --check      # manifest + secret scan only, no network
+    python3 scripts/clawhub-sync.py --dry-run    # probe the registry, publish nothing
+    python3 scripts/clawhub-sync.py              # publish what differs
     python3 scripts/clawhub-sync.py --only recover
 
 Stdlib only — no pip install step in CI.
@@ -29,21 +56,27 @@ Stdlib only — no pip install step in CI.
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import json
+import os
 import re
+import shutil
 import subprocess
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 MANIFEST = REPO / "clawhub.yml"
-REGISTRY = "https://clawhub.ai"
 OWNER = "conorbronsdon"
 SOURCE_REPO = f"{OWNER}/agent-skills"
 
-SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
+
+# Same globs as personal-context/scripts/clawhub-publish.sh. A publish uploads
+# every text file in the folder, `.env` included (docs/clawhub-publishing.md §3),
+# and it is not undoable by a delete — a soft delete cannot un-download what was
+# public in the meantime. Matched on name, like the shell original.
+RISKY_GLOBS = (".env*", "*.key", "*.pem", "credentials*", "*secret*")
 
 
 def parse_manifest(path: Path) -> list[dict]:
@@ -90,45 +123,54 @@ def parse_manifest(path: Path) -> list[dict]:
     return skills
 
 
-def published_version(slug: str) -> str | None:
-    """Latest version the registry holds for slug, or None if unpublished.
+def find_risky_files(folder: Path) -> list[Path]:
+    """Publishable files whose name looks like a credential.
 
-    Uses `clawhub inspect --json` rather than the search API: the search
-    projection returns `native.version: null` and only an opaque
-    `latestVersionId`, so it cannot answer this question. `inspect` returns
-    `latestVersion` as a plain semver string.
-
-    The slug is owner-qualified. A bare slug resolves globally, and several of
-    these names are taken by unrelated skills — a bare `skill-creator` returns
-    someone else's listing with ~98k downloads, which would silently compare
-    our version against a stranger's and skip or republish on that basis.
-
-    Note this is top-level `inspect`, not `skill inspect`. The latter does not
-    exist in v0.23.1 and errors; it cost a live verification pass on 2026-08-03.
+    Scans the whole folder, which is a superset of what actually uploads —
+    erring wide is the right direction for a guard that gates a public,
+    irreversible publish.
     """
-    try:
-        result = subprocess.run(
-            ["clawhub", "inspect", f"@{OWNER}/{slug}", "--json"],
-            capture_output=True, text=True,
-        )
-    except FileNotFoundError:
+    hits = []
+    for path in sorted(folder.rglob("*")):
+        if not path.is_file() or ".git" in path.parts:
+            continue
+        if any(fnmatch.fnmatch(path.name.lower(), glob) for glob in RISKY_GLOBS):
+            hits.append(path)
+    return hits
+
+
+def clawhub_bin() -> str:
+    """Absolute path to the CLI.
+
+    `shutil.which` resolves the PATHEXT shim on Windows (`clawhub.CMD`), which a
+    bare `subprocess.run(["clawhub", ...])` does not find. On Linux CI it
+    resolves the normal symlink.
+    """
+    found = shutil.which("clawhub")
+    if not found:
         raise SystemExit("clawhub CLI not found on PATH — npm install -g clawhub")
+    return found
+
+
+def probe(folder: Path, slug: str, name: str) -> dict:
+    """Ask the registry what it holds for slug, via a publish dry-run.
+
+    Publishes nothing. See the module docstring for why this rather than
+    `clawhub inspect`, and why --version/--categories/--topics are omitted here
+    but passed on the real publish.
+    """
+    result = subprocess.run(
+        [clawhub_bin(), "skill", "publish", str(folder),
+         "--slug", slug, "--name", name, "--dry-run", "--json"],
+        capture_output=True, text=True,
+    )
     if result.returncode != 0:
-        # An unpublished slug is a legitimate not-found, not an error. Anything
-        # else is worth seeing rather than silently treating as "publish it".
-        if "not found" in (result.stderr + result.stdout).lower():
-            return None
-        raise SystemExit(f"inspect failed for {slug}: {result.stderr.strip() or result.stdout.strip()}")
-
+        detail = (result.stderr or result.stdout).strip()
+        raise SystemExit(f"probe failed for {slug}: {detail}")
     try:
-        payload = json.loads(result.stdout)
+        return json.loads(result.stdout)
     except json.JSONDecodeError as exc:
-        raise SystemExit(f"inspect returned non-JSON for {slug}: {exc}")
-
-    if not payload.get("skill"):
-        return None
-    latest = payload.get("latestVersion")
-    return latest if isinstance(latest, str) else None
+        raise SystemExit(f"probe returned non-JSON for {slug}: {exc}")
 
 
 def git_head() -> str:
@@ -138,9 +180,29 @@ def git_head() -> str:
     ).stdout.strip()
 
 
+def semver_tuple(value: str) -> tuple[int, int, int] | None:
+    """(major, minor, patch) as ints, or None if not plain semver.
+
+    Ints, not the regex's string groups: comparing those lexically puts 1.10.0
+    below 1.9.0 and would call a correct manifest "behind the registry".
+    """
+    match = SEMVER.match(value or "")
+    return tuple(int(part) for part in match.groups()) if match else None
+
+
+def notice(level: str, message: str) -> None:
+    """Print, and surface it in the Actions UI when running there."""
+    print(f"{level.upper()}  {message}")
+    if os.environ.get("GITHUB_ACTIONS") == "true" and level in ("warning", "error"):
+        print(f"::{level}::{message}")
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dry-run", action="store_true", help="print commands, publish nothing")
+    parser = argparse.ArgumentParser(description="Publish skills to clawhub.ai")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="probe the registry and print decisions, publish nothing")
+    parser.add_argument("--check", action="store_true",
+                        help="validate the manifest and run the secret scan only; no network")
     parser.add_argument("--only", action="append", default=[], metavar="SLUG")
     args = parser.parse_args()
 
@@ -148,38 +210,99 @@ def main() -> int:
     if not skills:
         raise SystemExit(f"{MANIFEST}: no skills found")
 
-    commit = git_head()
-    published, skipped, failed = 0, 0, 0
-
+    targets = []
     for skill in skills:
         slug = skill.get("slug")
         if not slug:
             raise SystemExit(f"{MANIFEST}: list item with no slug: {skill}")
         if args.only and slug not in args.only:
             continue
+        targets.append(skill)
 
+    if args.only:
+        missing = set(args.only) - {s["slug"] for s in targets}
+        if missing:
+            raise SystemExit(f"--only named slugs not in the manifest: {', '.join(sorted(missing))}")
+
+    # Validate every target before touching the network, so a broken manifest
+    # fails the run rather than publishing the subset that happened to parse.
+    problems = 0
+    for skill in targets:
+        slug = skill["slug"]
         version = skill.get("version", "")
         if not SEMVER.match(version):
-            print(f"FAIL  {slug} — version {version!r} is not semver")
-            failed += 1
-            continue
-
+            notice("error", f"{slug} — version {version!r} is not semver")
+            problems += 1
         folder = REPO / slug
         if not (folder / "SKILL.md").is_file():
-            print(f"FAIL  {slug} — no SKILL.md at {folder}")
-            failed += 1
-            continue
+            notice("error", f"{slug} — no SKILL.md at {folder}")
+            problems += 1
 
-        live = published_version(slug)
-        if live == version:
-            print(f"skip  {slug} — {version} already published")
+    # The secret sweep, before any publish and across every target. A publish is
+    # public and irreversible, so this fails the whole run rather than skipping
+    # the one skill: nothing ships from a tree that holds a credential-shaped
+    # file. `--preflight` in the shell driver is advisory and skippable, which is
+    # why the guard lives on the publish path here rather than beside it.
+    for skill in targets:
+        for hit in find_risky_files(REPO / skill["slug"]):
+            notice("error", f"{skill['slug']} — refusing to publish, credential-shaped file "
+                            f"would upload: {hit.relative_to(REPO)}")
+            problems += 1
+
+    if problems:
+        print(f"\n{problems} problem(s) — nothing published")
+        return 1
+
+    if args.check:
+        print(f"check OK — {len(targets)} skill(s), manifest parses, no credential-shaped files")
+        return 0
+
+    commit = git_head()
+    published = skipped = failed = stale = 0
+
+    for skill in targets:
+        slug = skill["slug"]
+        version = skill["version"]
+        folder = REPO / slug
+        name = skill.get("name", slug)
+
+        state = probe(folder, slug, name)
+        latest = state.get("latestVersion")
+        # On an "unchanged" result this is the version whose fingerprint matched,
+        # which is not necessarily the latest — a revert to older content matches
+        # an older version. Comparing the two separates "current" from "reverted".
+        matched = state.get("version") if state.get("status") == "unchanged" else None
+        content_is_latest = matched is not None and matched == latest
+
+        if latest is None:
+            reason = "unpublished"
+        elif version == latest:
+            if content_is_latest:
+                print(f"skip  {slug} — {version} already published, content identical")
+            else:
+                notice("warning",
+                       f"{slug} — content differs from published {latest} but clawhub.yml still "
+                       f"says {version}. Bump the manifest version to ship it.")
+                stale += 1
             skipped += 1
             continue
+        else:
+            live = semver_tuple(latest)
+            # A registry version this cannot parse (a prerelease, say) is not
+            # something to guess about — publish forward and let the CLI reject
+            # it rather than silently deciding which one is newer.
+            if live is not None and semver_tuple(version) < live:
+                notice("error", f"{slug} — clawhub.yml says {version}, registry already holds "
+                                f"{latest}. The manifest is behind; fix it rather than "
+                                f"publishing backwards.")
+                failed += 1
+                continue
+            reason = f"{latest} -> {version}"
 
         cmd = [
-            "clawhub", "skill", "publish", str(folder),
+            clawhub_bin(), "skill", "publish", str(folder),
             "--slug", slug,
-            "--name", skill.get("name", slug),
+            "--name", name,
             "--version", version,
             "--categories", ",".join(skill.get("categories", [])),
             "--topics", ",".join(skill.get("topics", [])),
@@ -189,20 +312,23 @@ def main() -> int:
             "--source-path", slug,
         ]
 
-        was = live or "unpublished"
-        print(f"---   {slug}  {was} -> {version}")
-        print("      " + " ".join(cmd))
+        print(f"---   {slug}  {reason}")
+        print("      " + " ".join(cmd[1:]))
         if args.dry_run:
             continue
 
-        result = subprocess.run(cmd)
-        if result.returncode == 0:
+        if subprocess.run(cmd).returncode == 0:
             published += 1
         else:
-            print(f"FAIL  {slug} — clawhub exited {result.returncode}")
+            notice("error", f"{slug} — clawhub publish failed")
             failed += 1
 
-    print(f"\npublished={published} skipped={skipped} failed={failed}")
+    # A publish is not readable back immediately: the version stays absent from
+    # --versions and the detail API for 30-60s while moderation runs
+    # (docs/clawhub-publishing.md §8). Nothing here reads it back, which is
+    # deliberate — a verify step would report a false failure, and a retry loop
+    # would republish over a good publish.
+    print(f"\npublished={published} skipped={skipped} stale={stale} failed={failed}")
     return 1 if failed else 0
 
 
