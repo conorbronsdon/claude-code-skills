@@ -27,10 +27,24 @@ only reports "unchanged" when neither an explicit version nor explicit catalog
 metadata was passed (`hasExplicitCatalogMetadata` in publish.js); passing them
 suppresses the fingerprint check and makes every probe read "would-publish".
 
-The probe also resolves the slug against the authenticated owner rather than
-globally. That matters: a bare `skill-creator` resolves to an unrelated listing
-with ~98k downloads, and a gate reading that would compare our version against a
-stranger's. Verified — the probe returns our 1.0.0 for that slug, not theirs.
+Both the probe and the publish pass --owner explicitly. Slugs are not unique
+across the registry: `skill-creator` currently resolves to four owners
+(chindden, gasgangrene, paudyyin, conorbronsdon), and a gate that read a
+stranger's version would either publish backwards or refuse to publish at all.
+
+Owner scoping is not automatic. publish.js resolves it as
+
+    ownerHandle = explicitOwnerHandle
+                  || (optionalToken ? await getDefaultOwnerHandle(...) : undefined)
+
+and resolveSkillVersion only sends `ownerHandle` when that value is truthy — so
+with no --owner and no stored token the lookup is GLOBAL and silently reads
+whichever same-slug skill the registry returns. In CI the login step runs first,
+so the token path would cover it; run the script on a box that has never logged
+in and it would not. Passing --owner removes the dependency entirely, costs one
+flag, and skips a whoami round-trip per skill. On the publish call it is also a
+safety rail: a token belonging to some other handle now fails server-side
+instead of quietly publishing under that handle.
 
 `clawhub inspect` is not used. Its `--json` returns `latestVersion` as an object
 (`{"version": "1.0.0", ...}`), not a string, and reading it as a string silently
@@ -178,7 +192,7 @@ def probe(folder: Path, slug: str, name: str) -> dict:
     """
     result = subprocess.run(
         [clawhub_bin(), "skill", "publish", str(folder),
-         "--slug", slug, "--name", name, "--dry-run", "--json"],
+         "--slug", slug, "--name", name, "--owner", OWNER, "--dry-run", "--json"],
         capture_output=True, text=True,
     )
     if result.returncode != 0:
@@ -337,9 +351,19 @@ def main() -> int:
             clawhub_bin(), "skill", "publish", str(folder),
             "--slug", slug,
             "--name", name,
+            "--owner", OWNER,
             "--version", version,
-            "--categories", ",".join(skill.get("categories", [])),
-            "--topics", ",".join(skill.get("topics", [])),
+        ]
+        # Only when non-empty. publish.js sends the key just for being present
+        # (`options.categories !== undefined ? { categories } : {}`), and
+        # parseCsv("") is [] — so `--categories ""` would overwrite the skill's
+        # catalog metadata with an empty list. Omitting the flag leaves whatever
+        # the registry already holds.
+        for flag, values in (("--categories", skill.get("categories", [])),
+                             ("--topics", skill.get("topics", []))):
+            if values:
+                cmd += [flag, ",".join(values)]
+        cmd += [
             "--source-repo", SOURCE_REPO,
             "--source-commit", commit,
             "--source-ref", "main",
