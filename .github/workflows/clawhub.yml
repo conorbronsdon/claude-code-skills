@@ -70,11 +70,13 @@ concurrency:
 
 jobs:
   # Runs on pull requests, with no token and no network calls to the registry.
-  # Its job is to keep a credential-shaped file from reaching main at all: a
-  # publish uploads every text file in the skill folder, `.env` included, and it
-  # is not undoable — a soft delete cannot un-download what was public in the
-  # meantime. Catching that at merge time is cheaper than catching it at publish
-  # time, so the same scan runs in both places.
+  # Its job is to keep a credential-shaped file from reaching main at all. A
+  # publish uploads any file with an allowlisted extension whose path has no
+  # dot-leading segment — so `credentials.json` reaches the registry while
+  # `.env`, `*.key` and `*.pem` do not (measured against v0.23.1; see the note on
+  # RISKY_GLOBS in scripts/clawhub-sync.py). Publishing is not undoable: a soft
+  # delete cannot un-download what was public in the meantime. Catching it at
+  # merge time is cheaper than at publish time, so the scan runs in both places.
   check:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
@@ -102,7 +104,11 @@ jobs:
           node-version: "22"
 
       - name: Install ClawHub CLI
-        run: npm install -g clawhub
+        # Pinned. The version gate reads `latestVersion` from the dry-run JSON
+        # and treats null as "never published"; a CLI release that renames or
+        # drops that key would republish all nine skills silently. The shape
+        # assertion in clawhub-sync.py catches it too — this stops it earlier.
+        run: npm install -g clawhub@0.23.1
 
       - name: Authenticate
         env:

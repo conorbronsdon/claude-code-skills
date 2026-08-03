@@ -72,10 +72,27 @@ SOURCE_REPO = f"{OWNER}/agent-skills"
 
 SEMVER = re.compile(r"^(\d+)\.(\d+)\.(\d+)$")
 
-# Same globs as personal-context/scripts/clawhub-publish.sh. A publish uploads
-# every text file in the folder, `.env` included (docs/clawhub-publishing.md §3),
-# and it is not undoable by a delete — a soft delete cannot un-download what was
-# public in the meantime. Matched on name, like the shell original.
+# Deliberately wider than what can actually reach the registry today. Two CLI
+# filters already block most of this: dot-leading path segments are dropped, and
+# so is any extension outside the client's text allowlist. Measured against
+# v0.23.1 with dry-run publishes (fileCount and content fingerprint, baseline vs
+# planted):
+#
+#   .env.local        not uploaded        credentials.json  UPLOADED
+#   server.key        not uploaded        secrets.yaml      UPLOADED
+#   id.pem            not uploaded        notes.txt         UPLOADED
+#
+# So `.env*`, `*.key` and `*.pem` catch nothing right now; they stay as a hedge
+# against that filtering changing. `credentials*` and `*secret*` are the two that
+# match something publishable.
+#
+# The real gap is that this matches on NAME. A credential pasted inside
+# SKILL.md, config.json or settings.yml has an innocuous name and an allowlisted
+# extension, and nothing here stops it. Treat this as a tripwire for obvious
+# mistakes, not as the thing that makes publishing safe.
+#
+# Publishing is not undoable by a delete — a soft delete cannot un-download what
+# was public in the meantime.
 RISKY_GLOBS = (".env*", "*.key", "*.pem", "credentials*", "*secret*")
 
 
@@ -168,9 +185,26 @@ def probe(folder: Path, slug: str, name: str) -> dict:
         detail = (result.stderr or result.stdout).strip()
         raise SystemExit(f"probe failed for {slug}: {detail}")
     try:
-        return json.loads(result.stdout)
+        state = json.loads(result.stdout)
     except json.JSONDecodeError as exc:
         raise SystemExit(f"probe returned non-JSON for {slug}: {exc}")
+    # Assert the one field the whole gate rests on. `latestVersion` is a plain
+    # string here because publish.js unwraps it (`resolved.latestVersion?.version
+    # ?? null`) — but `clawhub inspect --json` returns it as an OBJECT, and an
+    # earlier version of this script read that shape, got None for every
+    # published skill, and would have republished all nine on every run. If a
+    # future CLI renames, drops, or nulls this key, the same silent failure
+    # returns: `latest is None` reads as "never published". Refuse instead.
+    if "latestVersion" not in state or not isinstance(
+        state["latestVersion"], (str, type(None))
+    ):
+        raise SystemExit(
+            f"probe for {slug}: unexpected JSON shape — 'latestVersion' is "
+            f"{state.get('latestVersion')!r}, expected a string or null. The CLI "
+            f"contract changed; refusing to publish rather than treating this as "
+            f"unpublished."
+        )
+    return state
 
 
 def git_head() -> str:
