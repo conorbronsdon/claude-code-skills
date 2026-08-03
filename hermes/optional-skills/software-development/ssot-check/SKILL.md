@@ -1,7 +1,7 @@
 ---
 name: ssot-check
 description: Find facts copied across docs that no longer match.
-version: 1.0.0
+version: 0.1.0
 author: Conor Bronsdon (conorbronsdon)
 license: MIT
 platforms: [linux, macos, windows]
@@ -10,6 +10,7 @@ metadata:
     tags: [documentation, drift, audit, single-source-of-truth, maintenance]
     category: software-development
     related_skills: [code-wiki]
+    requires_toolsets: [terminal]
 ---
 
 # SSOT Check — Fact-Copy Drift Auditor
@@ -22,7 +23,7 @@ This skill finds those copies, records which one is allowed to be right, and che
 against it. It does not fix anything on its own — every edit is proposed with an exact diff and
 waits for you.
 
-## When to use this skill
+## When to Use
 
 - First run on a repo, or after adding a new doc surface (a media kit, a landing page, a pricing page).
 - Before commits that touch docs, as a pre-commit habit.
@@ -35,13 +36,15 @@ tracking them only produces false positives.
 
 ## Prerequisites
 
-None. The skill uses `search_files` and `read_file` for the audit and `patch` for approved fixes.
-No API keys, no network access, no external dependencies.
+- `search_files` and `read_file` for the audit, `patch` to apply approved fixes to existing files,
+  `write_file` to create `.ssot.yaml` on a first run.
+- `terminal` access to `git`, used read-only for cross-repo checks.
+- A sibling clone on disk for any cross-repo copy.
 
-Cross-repo checking additionally needs the sibling repo cloned locally and `terminal` access to
-`git`.
+No API keys and no external dependencies. Network access is needed only when a manifest declares a
+cross-repo path, and only for `git fetch`.
 
-## How to run
+## How to Run
 
 ```
 Use the ssot-check skill to audit this repo for drift.
@@ -50,7 +53,7 @@ Use the ssot-check skill to audit this repo for drift.
 Mode is auto-detected: a `.ssot.yaml` at the repo root means check mode, its absence means discover
 mode. Say "discover" or "check" to force one.
 
-## Quick reference
+## Quick Reference
 
 | Status | Meaning |
 |---|---|
@@ -64,14 +67,16 @@ Manifest shape (`.ssot.yaml`, repo root):
 
 ```yaml
 facts:
-  - name: episode-count
-    note: Total published episodes. Excludes the trailer.
+  - name: supported-languages
+    note: Count of languages the parser handles. Excludes experimental grammars.
     canonical:
-      file: outputs/episodes/README.md
-      pattern: 'Total Episodes:\s*\*?\*?(\d+)'
+      file: docs/reference/languages.md
+      pattern: 'Supported languages:\s*\*?\*?(\d+)'
     copies:
-      - file: sponsorship/media-kit.md
-        pattern: '(\d+) published episodes'
+      - file: README.md
+        pattern: '(\d+) supported languages'
+      - file: ../marketing-site/index.html
+        pattern: '<span class="stat-languages">(\d+)</span>'
 ```
 
 Schema rules that matter:
@@ -83,11 +88,20 @@ Schema rules that matter:
   description, and JSON-LD blob each carry the number separately and drift from each other.
 - Comparison strips whitespace, thousands separators (`1,234` matches `1234`), and a trailing `+`
   on the copy. Everything else must match exactly.
-- `note` should record **counting conventions** ("excludes trailer", "downloads not streams"). Real
-  drift is often a convention mismatch between two numbers that both look correct.
-- `rounding` (optional, per copy) declares a deterministic transform — `floor-10`, `floor-100`,
-  `floor-1000`, `floor-1000-as-K` — for copies a script intentionally rounds. The transform is
-  exact, so a mismatch still means something is wrong.
+- `note` should record **counting conventions** ("excludes experimental grammars", "installs not
+  downloads"). Real drift is often a convention mismatch between two numbers that both look correct.
+- `rounding` (optional, per copy) declares a deterministic transform applied to the *canonical*
+  value before an exact comparison, for copies a script intentionally rounds:
+
+  | Value | Transform |
+  |---|---|
+  | `floor-10` | Floor to the nearest multiple of 10. |
+  | `floor-100` | Floor to the nearest multiple of 100. |
+  | `floor-1000` | Floor to the nearest multiple of 1000. |
+  | `floor-1000-as-K` | Floor to thousands, then compare against a value written as `NNNK` (canonical `156703` matches a copy reading `156K`). |
+
+  The transform is exact, not fuzzy, so a mismatch after rounding still means something is wrong —
+  usually sync lag.
 - Forward slashes in paths on every platform. Regexes in single-quoted YAML so backslashes survive.
 
 ## Procedure
@@ -124,17 +138,40 @@ Schema rules that matter:
    manifest is paperwork. If a value is sensitive and the report could leave the repo, mask it as
    `<redacted>` and keep the fact — a manifest with a hole in it protects nothing.
 
-6. **Write `.ssot.yaml` only after explicit approval.**
+6. **Write `.ssot.yaml` with `write_file` only after explicit approval.** Report the discarded count
+   alongside the proposal so the human can see what the scan chose to ignore.
 
 ### Check mode
 
 1. **Read `.ssot.yaml`** with `read_file`. If absent, switch to discover mode.
 
-2. **For each fact**, extract the canonical value, then compare every copy. Apply any declared
-   `rounding` to the canonical value before comparing. Record `file:line` for each mismatch.
+2. **Refresh any sibling repos** named by cross-repo paths, following the read-only rules below.
+   A stale sibling working tree silently poisons every comparison that touches it.
 
-3. **Report**, then apply fixes one fact at a time with `patch`, showing the exact diff for each and
-   waiting for approval. Always emit the exit summary line, even when everything is clean.
+3. **For each fact**, extract the canonical value, then compare every copy. Apply any declared
+   `rounding` to the canonical value first, then compare exactly. Assign one status per copy:
+
+   - **IN SYNC** — values match.
+   - **DRIFTED** — record the canonical value, the copy value, and the copy's `file:line`. Before
+     proposing an edit, check direction: on a count that only grows, a copy *higher* than the
+     canonical means the canonical is probably stale. Report **DRIFTED (canonical suspect)** and ask
+     the human to confirm the live value rather than proposing an edit that would regress the copy.
+   - **CANONICAL MOVED** — the canonical pattern does not match, or the canonical file is missing.
+     The manifest is stale. Propose an updated pattern or file path if the value is findable nearby.
+   - **STALE ENTRY** — a copy's pattern does not match at all. The copy was reworded or removed.
+     Propose a manifest update.
+
+4. **Report**, then apply fixes one fact at a time, showing the exact diff for each and waiting for
+   approval. **Fixes route by status:** DRIFTED gets a content edit to the document with `patch`;
+   CANONICAL MOVED and STALE ENTRY get an edit to `.ssot.yaml`, not to any document. Flag cross-repo
+   edits as landing in the sibling repo with its own commit and deploy path.
+
+   Always close with the exit summary line, even when everything is clean:
+
+   ```
+   8 facts checked, 1 drifted, 1 stale manifest entry.
+   8 facts checked, all in sync.
+   ```
 
 ### Cross-repo copies
 

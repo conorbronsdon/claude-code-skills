@@ -1,7 +1,7 @@
 ---
 name: eval-integrity
-description: Audit an LLM benchmark for integrity before publishing.
-version: 1.0.0
+description: Check whether a benchmark's numbers survive review.
+version: 0.1.0
 author: Conor Bronsdon (conorbronsdon)
 license: MIT
 platforms: [linux, macos, windows]
@@ -9,7 +9,8 @@ metadata:
   hermes:
     tags: [benchmarks, evaluation, llm-eval, reproducibility, contamination, audit, research-integrity]
     category: research
-    related_skills: [ssot-check]
+    related_skills: [ssot-check, subagent-driven-development]
+    requires_toolsets: [terminal]
 ---
 
 # Eval Integrity — Benchmark Credibility Audit
@@ -25,7 +26,7 @@ published numbers* from gaps that are merely nice to close.
 It is read-only. It reports and offers fixes; it never edits the benchmark, re-runs an eval, or
 touches a leaderboard.
 
-## When to use this skill
+## When to Use
 
 - Before submitting a benchmark to a grant, conference, or public leaderboard.
 - When someone says "I don't trust those numbers" and you need to know whether they are right.
@@ -38,13 +39,14 @@ nobody relies on. Integrity scaffolding is overhead until someone depends on the
 ## Prerequisites
 
 None beyond a local clone of the benchmark. The audit uses `search_files` to find evidence,
-`read_file` to check it, `terminal` for `git rev-parse`, and `delegate_task` to run the seven
-dimensions in parallel. No API keys and no network access are required.
+`read_file` to check it, `terminal` for `git rev-parse` and `gh`, and `delegate_task` to run the
+seven dimensions in parallel. No API keys required.
 
-If open pull requests should be checked for in-flight fixes, `terminal` access to an authenticated
-`gh` is useful but optional.
+Listing the target's open pull requests is a **standing step, not optional** — in-flight fixes are
+excluded from the gap counts, so skipping it inflates the verdict. That needs `terminal` access to
+an authenticated `gh`. Without it, say so in the report and count every finding as a live gap.
 
-## How to run
+## How to Run
 
 ```
 Use the eval-integrity skill to audit ./path-to-benchmark.
@@ -52,20 +54,24 @@ Use the eval-integrity skill to audit ./path-to-benchmark.
 
 With no path given, the current directory is assumed.
 
-## Quick reference
+## Quick Reference
 
 | # | Dimension | The question it asks |
 |---|---|---|
 | 1 | Pre-registration | Is the run's definition (corpus hash, judge panel, seeds, temps) fixed on disk *before* results exist? |
-| 2 | Contamination | Are corpus authors and their model family barred from being contestants? Is there a private holdout with a published public-vs-holdout gap? |
+| 2 | Contamination | Are corpus authors and their model family barred from being contestants? Is per-scenario authorship recorded? Is there a private holdout with a published public-vs-holdout gap? |
 | 3 | Holdout hygiene | Can holdout content leak via CI logs, workflow artifacts, committed transcripts, or error messages? |
-| 4 | Judge validity | Is the judge pinned to the model actually served? Are agreement stats reported, and length and halo bias controlled? |
-| 5 | Statistical honesty | Do headline numbers carry confidence intervals? Is micro-vs-macro stated, pass@k vs pass^k disambiguated, seeds fixed? |
+| 4 | Judge validity | Is the judge pinned to the model actually served? Are multi-judge agreement stats reported? Are judge-family-vs-contestant conflicts, length bias, and halo effects controlled? |
+| 5 | Statistical honesty | Do headline numbers carry confidence intervals? Is micro-vs-macro stated, pass@k vs pass^k disambiguated, seeds fixed and multiple-comparison risk acknowledged? |
 | 6 | Reproducibility | Is there a deterministic re-run path, cost caps and resume for expensive runs, and a pinned environment? |
-| 7 | Leaderboard exclusions | Are null-agent baselines, holdout rows, and non-default configs kept out of public aggregates, enforced by tripwire tests rather than stated intent? |
+| 7 | Leaderboard exclusions & publish mechanics | Are null-agent baselines, holdout rows, and non-default configs kept out of public aggregates, enforced by tripwire tests rather than stated intent? And does the publish path actually ship what the docs promise? |
 
 Ratings: **PRESENT** (implemented *and* enforced in code or test, not just prose) · **PARTIAL**
-(documented, not enforced) · **ABSENT** (no evidence anywhere).
+(documented, not enforced) · **ABSENT** (no evidence anywhere) · **N/A** (the dimension does not
+apply — an eval with no LLM judge rates judge validity N/A, it does not rate it ABSENT).
+
+Ratings are per dimension. A dimension whose sub-checks disagree takes the **weakest** rating any
+sub-check earned, and the report names which sub-check set it.
 
 Severity: **INVALIDATING** (a reviewer who finds this can dismiss the result) · **HARDENING**
 (weakens credibility without invalidating a number).
@@ -90,8 +96,13 @@ excluded from the counts. Verify the PR against its actual diff, not its title.
 ### Step 2 — Run the seven dimensions in parallel
 
 Dispatch seven `delegate_task` subagents in a single batch. Each receives the repo path, the HEAD
-SHA, the located parts from Step 1, its dimension's brief, and the report contract below, capped at
-~400 words.
+SHA, the located parts from Step 1, its dimension's brief from
+[`references/dimension-briefs.md`](references/dimension-briefs.md), and the report contract below,
+capped at ~400 words. Each brief carries that dimension's sub-checks, its search vocabulary, and its
+own severity rule — several are conditional and do not reduce to the global heuristic in Step 4.
+
+On a small target — one scoring file, no CI, no leaderboard — running the dimensions inline is
+cheaper than seven subagents and loses nothing.
 
 If `delegate_task` is unavailable, run the dimensions inline one after another in the same order,
 with the same evidence bar. Note in the report that the audit ran sequentially. Do not thin it.
@@ -101,7 +112,8 @@ with the same evidence bar. Note in the report that the audit ran sequentially. 
 A rating with no `file:line` — or no explicit "searched X, Y, Z, found nothing" — is a guess.
 Reject it and send the dimension back.
 
-**A search miss alone does not establish ABSENT.** The briefs carry one repo's vocabulary; the
+**A search miss alone does not establish ABSENT.** The briefs in `references/dimension-briefs.md`
+carry one repo's vocabulary; the
 target may name the same concept differently. Search by concept — read the scoring entry points,
 the CI workflows, the docs — before rating any sub-check ABSENT.
 
@@ -122,10 +134,10 @@ expensive runs; environment pinned in prose rather than a lockfile.
 EVAL-INTEGRITY AUDIT — <repo> @ <short-sha> — <date>
 
 VERDICT: <PUBLISH-READY | N INVALIDATING GAP(S) | NOT A BENCHMARK>
-Score: <n> PRESENT / <n> PARTIAL / <n> ABSENT
+Score: <n>/7 PRESENT · <n> PARTIAL · <n> ABSENT · <n> N/A
 
 INVALIDATING GAPS (fix before publishing)
-- [<dimension>] <one line>. Evidence: <file:line>. Fix: <concrete change>.
+- [<dimension>] <one line>. Evidence: <file:line, or "absent: searched X, Y, Z">. Fix: <concrete change>.
 
 HARDENING GAPS (raise credibility)
 - [<dimension>] <one line>. Evidence: <…>. Fix: <…>.

@@ -1,15 +1,16 @@
 ---
 name: angel-diligence
 description: Research a startup and draft a cited deal memo.
-version: 1.0.0
+version: 0.1.0
 author: Conor Bronsdon (conorbronsdon)
 license: MIT
 platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [investing, due-diligence, startups, research, deal-memo, angel]
-    category: finance
-    related_skills: [osint-investigation, domain-intel]
+    category: research
+    related_skills: [osint-investigation, domain-intel, duckduckgo-search]
+    requires_toolsets: [web]
 ---
 
 # Angel Diligence — Pre-Investment Deal Memo
@@ -21,7 +22,7 @@ scaffold, not a recommendation.
 **This skill never outputs invest or pass.** Naming a price or a range is pricing the deal, which
 is the recommendation in disguise. The memo is evidence; the decision is the reader's.
 
-## When to use this skill
+## When to Use
 
 - "Diligence [company]" or "research [company] for an angel check".
 - Before a founder call, to generate the highest-information questions.
@@ -32,10 +33,18 @@ already hold a position and want a position review instead.
 
 ## Prerequisites
 
-Web access for `web_extract`. No API keys, no paid data sources, no external dependencies. The memo
-is written to a local file with `patch`.
+- **A web search capability.** This is the hard dependency, and it is separate from fetching:
+  `web_extract` retrieves a URL you already have, it does not discover one. Every research angle in
+  Step 3 starts from a search. Install one of the search skills — `duckduckgo-search` or
+  `searxng-search` — or use `browser_navigate` to drive a search engine directly. Without a
+  discovery path this skill cannot satisfy its own first evidence rule and should not be run.
+- `web_extract` to fetch and read each source found.
+- `write_file` to create the memo, `read_file` to revise it.
+- `delegate_task` for the parallel research angles. Optional — a sequential fallback is given.
 
-## How to run
+No API keys and no paid data sources.
+
+## How to Run
 
 ```
 Use the angel-diligence skill to diligence Acme Corp.
@@ -43,7 +52,7 @@ Use the angel-diligence skill to diligence Acme Corp.
 
 Pass the website too if the name is ambiguous — many startups share names.
 
-## Quick reference
+## Quick Reference
 
 **Six evidence rules. These override speed.** A short memo with real citations beats a long memo
 with invented facts.
@@ -52,10 +61,10 @@ with invented facts.
 |---|---|
 | 1 | Every factual claim needs a page you actually fetched. Model memory is not a source; it is stale by definition for startups. |
 | 2 | "Could not verify" is a valid finding. Absence of evidence is itself a signal. Never fill a gap with a plausible guess. |
-| 3 | Date everything. A 14-month-old headcount presented as current is a hallucination with a citation. |
+| 3 | Date everything: every cited fact carries the date of the source page, or the literal marker `undated`. A 14-month-old headcount presented as current is a hallucination with a citation. |
 | 4 | Separate **verified** from **claimed**. Company-sourced is claimed. Press counts as verified only when it quotes a customer or third party from their own experience. |
 | 5 | No invented numbers. Market sizing is built bottom-up from cited inputs with the arithmetic shown. |
-| 6 | Deck contents never enter a search query. |
+| 6 | **Deck contents never leave the session.** Never put deck numbers, customer names from the deck, or roadmap details into a search query, a fetched URL, a subagent prompt, or any other external tool. |
 
 **Rule 6 litmus test:** could someone who never saw the deck have written this query? If not, do not
 run it. The company's name and public website are not confidential even when you learned them from
@@ -75,17 +84,17 @@ available. Note today's date; it anchors every recency judgment.
 Two gates before any research begins:
 
 - **Conflict of interest.** Ask whether the company competes with, partners with, or sits adjacent
-  to the reader's employer, or any company where they hold inside information. If yes, say plainly
-  that they should check their employment agreement and trading policy first, and proceed only on
-  explicit confirmation. The memo header must then state that research used public sources only.
+  to the reader's employer, or any company where they hold inside information. If yes, pause and say
+  plainly that they should check their employment agreement and trading policy first, and proceed
+  only on explicit confirmation. Do not silently research a competitor of the reader's employer. The memo header must then state that research used public sources only.
 - **Deal structure.** Direct primary, SPV, or secondary? An SPV adds fees and carry and usually
   drops information rights. A secondary price is not the round valuation. Record the answer.
 
 ### Step 2 — Orient
 
-Fetch the company website with `web_extract` and run one search for recent funding news. Establish
-what they sell, roughly what stage, and founder names. This grounds the research prompts so they
-cover the right company.
+Search for recent funding news, then fetch the company website with `web_extract`. Establish what
+they sell, roughly what stage, and founder names. This grounds the research prompts so they cover
+the right company. Timebox it to about five minutes — orientation, not research.
 
 ### Step 3 — Parallel research
 
@@ -98,8 +107,10 @@ Dispatch three `delegate_task` subagents in one batch:
 - **Market and competition** — who actually pays, bottom-up sizing inputs, direct and adjacent
   competitors, incumbent feature risk.
 
-Every prompt carries the company name and website, today's date, the six evidence rules verbatim,
-and a ~600-word cap including citations. If deck notes exist, pass only derived search targets
+Every prompt carries the company name and website, today's date, the six evidence rules **pasted
+verbatim from the table above — do not re-summarize them**, an explicit "no URL, no claim" line, a
+~600-word cap including citations, and the output contract: findings first, then a "could not
+verify" list. If deck notes exist, pass only derived search targets
 ("verify whether they have enterprise customers") and never the deck text. A derived target passes
 the same litmus test as a query.
 
@@ -109,34 +120,42 @@ If `delegate_task` is unavailable, run the three angles sequentially with the sa
 
 Subagent output is unverified input. Before writing anything:
 
-- Fetch the cited URL yourself for the 3–5 highest-stakes claims — prior exits, named customers,
-  funding amounts, valuation, headline revenue, and anything a subagent upgraded from claimed to
-  verified. If the page does not support the claim, demote it to "could not verify".
+- Fetch the cited URL yourself for the 3–5 highest-stakes claims. Highest-stakes means **any claim
+  that would change the verdict scaffold if it turned out false** — in practice prior exits, named
+  customers, funding amounts, valuation, headline revenue, and anything a subagent upgraded from
+  claimed to verified. If the page does not support the claim, demote it to "could not verify".
 - Strip any claim that arrived without a URL.
 - Flag any load-bearing fact older than six months as possibly stale.
-- Report contradictions between subagents rather than picking a winner.
+- Cross-check contradictions between subagents (a team page headcount against a public profile
+  count, say) and report the discrepancy rather than picking a winner.
 
 ### Step 5 — Write the memo
 
-Write to `diligence/{company-slug}-{YYYY-MM-DD}.md` using exactly these nine sections:
+Write with `write_file` to `{output_dir}/{company-slug}-{YYYY-MM-DD}.md`, asking where to put it
+if the reader has not said; `diligence/` is a reasonable default, not a requirement. Use exactly
+these nine sections:
 
 1. **Snapshot** — what they do in one plain sentence. Stage, round, ask, each marked
-   provided/verified/unverified. Deal structure with its one-line consequence.
+   provided-by-user, verified, or "could not verify". Deal structure with its one-line consequence.
 2. **Team** — each founder, cited. Red flags called out plainly: serial pivots, disputed departures,
    inflated titles, no public technical footprint for a "technical founder". If clean, write "no red
    flags found in public sources" rather than inventing praise.
 3. **Market** — who actually pays (the buyer, not the user, when they differ). Bottom-up sizing with
-   arithmetic shown and inputs cited, labeled an order-of-magnitude estimate. Timing thesis: why now
-   and not two years ago.
-4. **Product and moat** — real today versus roadmap, with evidence. Most AI startups have no moat
-   beyond execution speed; when that is true here, say so in those words.
+   arithmetic shown and inputs cited, labeled an order-of-magnitude estimate. No top-down TAM quotes
+   unless cited, and even then labeled vendor-reported. Timing thesis: why now and not two years ago.
+4. **Product and moat** — real today versus roadmap, with evidence (commit activity, changelog
+   dates, docs depth, whether a demo is public or gated). List candidate moats — data flywheel,
+   workflow lock-in, distribution, regulatory — and the evidence for or against each. Most AI
+   startups have no moat beyond execution speed; when that is true here, say so in those words.
 5. **Traction** — each signal labeled verified or claimed. Stars and downloads carry a standing
-   caveat: gameable, weakly correlated with revenue.
+   caveat: gameable, weakly correlated with revenue. Hiring velocity and press naming customers
+   count; deck metrics repeat as claimed only.
 6. **Competition** — direct, adjacent, and the incumbent question: why doesn't the obvious platform
    add this as a feature, and what happens if it does?
 7. **Risks** — top five, ranked, each with one line of "what evidence would change my mind".
 8. **Open questions for the founder call** — the 6–8 highest-information questions this research
-   could not answer. Prefer ones whose answers are checkable later.
+   could not answer. Prefer ones whose answers are checkable later, and skip anything public sources
+   already answered.
 9. **Verdict scaffold** — strongest signal for, strongest signal against, and the 2–3 unknowns that
    move the price most. List the unknowns only; never state a range, a multiple, or an anchor. Close
    with: "Decision is yours. This memo is evidence, not advice."
