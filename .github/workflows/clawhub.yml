@@ -1,0 +1,142 @@
+name: Publish to ClawHub
+
+# Mirrors the publish.yml pattern used across the MCP servers: the step is gated
+# on its own registry check, so a workflow_dispatch performs a catch-up without
+# needing a version bump to trigger it.
+#
+# A skill publishes when its `version` in clawhub.yml differs from what the
+# registry holds. A push that changes nothing publishes nothing — the gate is a
+# `clawhub skill publish --dry-run` probe, which reports both the published
+# version and whether the folder's content fingerprint already matches it.
+# Changing a skill without bumping its manifest version does not ship, and the
+# run logs a warning naming the skill, so that is visible rather than silent.
+#
+# Setup (once): add a CLAWHUB_TOKEN repository secret. Get it from a machine
+# where `clawhub login` has been completed:
+#
+#     clawhub token
+#
+# It is a long-lived bearer token with publish rights to the conorbronsdon
+# handle, stored in plaintext at %APPDATA%\clawhub\config.json (POSIX:
+# ~/.config/clawhub/config.json). Rotate with `clawhub logout && clawhub login`
+# and update the secret. Never echo it — the publish job masks it as a secret,
+# but a `set -x` or a `clawhub token` call in a step would defeat that.
+
+on:
+  push:
+    branches: [main]
+    # Only the things that can change what gets published: the skill folders,
+    # the manifest, and the machinery itself. A README or docs-only commit does
+    # not start a run.
+    paths:
+      - "clawhub.yml"
+      - "angel-diligence/**"
+      - "code-review/**"
+      - "eval-integrity/**"
+      - "guest-circuit/**"
+      - "reconcile/**"
+      - "recover/**"
+      - "session-management/**"
+      - "skill-creator/**"
+      - "ssot-check/**"
+      - "scripts/clawhub-sync.py"
+      - ".github/workflows/clawhub.yml"
+  pull_request:
+    paths:
+      - "clawhub.yml"
+      - "angel-diligence/**"
+      - "code-review/**"
+      - "eval-integrity/**"
+      - "guest-circuit/**"
+      - "reconcile/**"
+      - "recover/**"
+      - "session-management/**"
+      - "skill-creator/**"
+      - "ssot-check/**"
+      - "scripts/clawhub-sync.py"
+      - ".github/workflows/clawhub.yml"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Probe the registry and print what would publish, without publishing"
+        type: boolean
+        default: false
+
+concurrency:
+  # Serialize: two runs publishing the same slug race on the registry's version
+  # check and the loser fails on an already-taken version.
+  group: clawhub-publish
+  cancel-in-progress: false
+
+jobs:
+  # Runs on pull requests, with no token and no network calls to the registry.
+  # Its job is to keep a credential-shaped file from reaching main at all. A
+  # publish uploads any file with an allowlisted extension whose path has no
+  # dot-leading segment — so `credentials.json` reaches the registry while
+  # `.env`, `*.key` and `*.pem` do not (measured against v0.23.1; see the note on
+  # RISKY_GLOBS in scripts/clawhub-sync.py). Publishing is not undoable: a soft
+  # delete cannot un-download what was public in the meantime. Catching it at
+  # merge time is cheaper than at publish time, so the scan runs in both places.
+  check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate manifest and scan for credential-shaped files
+        run: python3 scripts/clawhub-sync.py --check
+
+  publish:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # clawhub-sync.py pins --source-commit from HEAD, which a shallow
+          # checkout still resolves correctly.
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install ClawHub CLI
+        # Pinned. The version gate reads `latestVersion` from the dry-run JSON
+        # and treats null as "never published"; a CLI release that renames or
+        # drops that key would republish all nine skills silently. The shape
+        # assertion in clawhub-sync.py catches it too — this stops it earlier.
+        run: npm install -g clawhub@0.23.1
+
+      - name: Authenticate
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          if [ -z "$CLAWHUB_TOKEN" ]; then
+            echo "::error::CLAWHUB_TOKEN secret is not set. See the header of this workflow."
+            exit 1
+          fi
+          clawhub login --token "$CLAWHUB_TOKEN" --no-browser
+          clawhub whoami
+
+      # The secret scan runs inside clawhub-sync.py, across every skill in the
+      # manifest, before the first publish call — and it fails the run rather
+      # than skipping the offending skill, so nothing ships from a tree holding
+      # a credential-shaped file.
+      - name: Publish changed skills
+        env:
+          # Via env rather than interpolated into the script body. `inputs` is
+          # empty on a push event, so this is "" there and the publish runs.
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            python3 scripts/clawhub-sync.py --dry-run
+          else
+            python3 scripts/clawhub-sync.py
+          fi
+
+      - name: Remove stored token
+        if: always()
+        run: clawhub logout || true
