@@ -35,10 +35,10 @@ These are patterns I built for my own daily work and generalized for anyone to u
 | [demo-gif-skill](https://github.com/conorbronsdon/demo-gif-skill) ↗ | `"add a demo gif"` | Demo GIFs rot the moment a tool's output changes — this scripts a reproducible one (vhs/Playwright) into any README |
 | [repo-audit](https://github.com/conorbronsdon/repo-audit) ↗ | `"audit this repo"` | A README claims something is blocked; nothing blocks it — this finds the mechanism behind every claim and grades it Enforced, Advisory, or Guidance |
 | [agent-memory-kit](https://github.com/conorbronsdon/agent-memory-kit) ↗ | `/dream rot`, `/dream lint` | Agent memory accumulates and never forgets — this adds the curation pass that catches rot and contradictions before the agent is confidently wrong |
-| [agent-workspace](https://github.com/conorbronsdon/agent-workspace) ↗ | `/start`, `/end`, `/update`, `/today`, `/reconcile`, `/recover` | Standalone package of the four session-management commands plus reconcile and recover, with a configurable state layout (`workspace.yaml`) |
-| [agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder) ↗ | `/skill-creator` | Hardened home of this repo's Skill Creator — adds a machine-checkable validator and weekly spec-drift CI |
+| [agent-workspace](https://github.com/conorbronsdon/agent-workspace) ↗ | Same commands, packaged | Standalone package of Session Management, Reconcile, and Recover above, with a configurable state layout (`workspace.yaml`) |
+| [agent-skill-builder](https://github.com/conorbronsdon/agent-skill-builder) ↗ | Same command, hardened | Standalone home of Skill Creator above — adds a machine-checkable validator and weekly spec-drift CI |
 
-Rows marked ↗ live in their own repo. Everything else installs from this one.
+Rows marked ↗ live in their own repo. Everything else installs from this one. An ↗ row that repackages a skill listed above runs those same commands, so no command is listed twice.
 
 ## Quick Start
 
