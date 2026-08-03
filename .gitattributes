@@ -1,0 +1,21 @@
+# Line endings are part of the published artifact, so they cannot be a local
+# preference. `clawhub skill publish` fingerprints file bytes; a CRLF working
+# tree and an LF working tree of the same commit produce different fingerprints,
+# and the registry then reports every skill as "content differs from published
+# 1.0.0" (issue #26 — stale=9 on the Linux runner, stale=0 on the Windows
+# machine the nine were published from).
+#
+# `text=auto eol=lf` normalizes to LF in the index and checks LF back out on
+# every platform, including a Windows clone with core.autocrlf=true. Local and
+# CI then fingerprint the same bytes.
+* text=auto eol=lf
+
+# Binary. Without this, `text=auto` still has to guess, and a false positive
+# would corrupt the file on checkout.
+*.gif binary
+*.png binary
+
+# Executed by CI and by `install.sh`; a CR at the end of a shebang line is a
+# runtime failure, not a diff.
+*.sh text eol=lf
+*.py text eol=lf
