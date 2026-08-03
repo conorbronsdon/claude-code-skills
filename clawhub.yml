@@ -1,0 +1,78 @@
+# ClawHub publishing manifest.
+#
+# Single source of truth for what this repo publishes to clawhub.ai and how it
+# is catalogued. `.github/workflows/clawhub.yml` reads this file, compares each
+# `version` against what the registry already holds, and publishes only what
+# changed.
+#
+# To ship a skill update: edit the skill, bump its `version` here, merge to
+# main. Forgetting the bump means the change does not reach ClawHub — that is
+# deliberate, and the workflow logs every skill it skipped for that reason.
+#
+# Why a manifest rather than frontmatter: unofficial frontmatter keys add
+# listing noise in every consumer that renders SKILL.md, a tradeoff already
+# declined once (skills-portfolio-roadmap.md, "skill.yaml common contract —
+# deferred"). Versions are semver and independent per skill; ClawHub rejects
+# a republish at an existing version.
+#
+# Category slugs the registry recognizes:
+#   agents automation communication creative development finance
+#   integrations knowledge operations other productivity research security
+#
+# Deliberately absent: any skill whose SKILL.md is written around Conor's
+# private repo layout. Those live in personal-context and are not publishable.
+
+skills:
+  - slug: skill-creator
+    name: Skill Creator
+    version: 1.0.0
+    categories: [development, agents]
+    topics: [agent-skills, scaffolding, claude-code, meta]
+
+  - slug: code-review
+    name: Code Review
+    version: 1.0.0
+    categories: [development]
+    topics: [code-review, pull-requests, subagents, ci]
+
+  - slug: recover
+    name: Recover
+    version: 1.0.0
+    categories: [development, operations]
+    topics: [git, worktree, cleanup, claude-code]
+
+  - slug: reconcile
+    name: Reconcile
+    version: 1.0.0
+    categories: [development, operations]
+    topics: [git, parallel-sessions, drift, claude-code]
+
+  - slug: session-management
+    name: Session Management
+    version: 1.0.0
+    categories: [productivity, agents]
+    topics: [session-management, context, state, claude-code]
+
+  - slug: ssot-check
+    name: SSOT Check
+    version: 1.0.0
+    categories: [knowledge, development]
+    topics: [documentation, drift, single-source-of-truth]
+
+  - slug: eval-integrity
+    name: Eval Integrity
+    version: 1.0.0
+    categories: [research, development]
+    topics: [benchmarks, llm-eval, reproducibility]
+
+  - slug: angel-diligence
+    name: Angel Diligence
+    version: 1.0.0
+    categories: [research, finance]
+    topics: [investing, due-diligence, startups]
+
+  - slug: guest-circuit
+    name: Guest Circuit
+    version: 1.0.0
+    categories: [research, creative]
+    topics: [podcasting, guest-research, outreach]

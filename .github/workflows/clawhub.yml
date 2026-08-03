@@ -1,0 +1,81 @@
+name: Publish to ClawHub
+
+# Mirrors the publish.yml pattern used across the MCP servers: the step is gated
+# on its own registry-version check, so a workflow_dispatch performs a catch-up
+# without needing a version bump to trigger it.
+#
+# A skill publishes when its `version` in clawhub.yml differs from what the
+# registry holds. Forgetting the bump means the change does not ship — the run
+# logs every skill it skipped and why, so that is visible rather than silent.
+#
+# Setup (once): add a CLAWHUB_TOKEN repository secret. Get it from a machine
+# where `clawhub login` has been completed:
+#
+#     clawhub token
+#
+# It is a long-lived bearer token with publish rights to the conorbronsdon
+# handle. Rotate with `clawhub logout && clawhub login` and update the secret.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "clawhub.yml"
+      - "*/SKILL.md"
+      - "*/**"
+      - "!README.md"
+      - "!.github/**"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print what would publish without publishing"
+        type: boolean
+        default: false
+
+concurrency:
+  # Serialize: two runs publishing the same slug race on the registry's version
+  # check and the loser fails on an already-taken version.
+  group: clawhub-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # clawhub-sync.py pins --source-commit from HEAD, and a shallow
+          # checkout still resolves that correctly.
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install ClawHub CLI
+        run: npm install -g clawhub
+
+      - name: Authenticate
+        env:
+          CLAWHUB_TOKEN: ${{ secrets.CLAWHUB_TOKEN }}
+        run: |
+          if [ -z "$CLAWHUB_TOKEN" ]; then
+            echo "::error::CLAWHUB_TOKEN secret is not set. See the header of this workflow."
+            exit 1
+          fi
+          clawhub login --token "$CLAWHUB_TOKEN" --no-browser
+          clawhub whoami
+
+      - name: Publish changed skills
+        run: |
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
+            python3 scripts/clawhub-sync.py --dry-run
+          else
+            python3 scripts/clawhub-sync.py
+          fi
+
+      - name: Remove stored token
+        if: always()
+        run: clawhub logout || true
