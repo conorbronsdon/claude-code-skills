@@ -17,9 +17,13 @@
 #
 # These versions are ClawHub's, and nothing else reads them: no SKILL.md in this
 # repo carries a frontmatter `version:`, so there is no second copy to drift
-# from. Whether the registry would reject a publish at an existing version is
-# untested and deliberately not relied on — the workflow's gate is what keeps it
-# from trying.
+# from. The registry rejects a publish at a version that already exists —
+# `Version X already exists. Increment the version number and try again.`, thrown
+# unconditionally by the insert mutation (openclaw/clawhub, convex/skills.ts:12977
+# in `insertVersion`, with a second staged check at convex/lib/skillPublish.ts:229).
+# Read from source, not by trying it. There is no overwrite and no revision: the
+# check does not exclude soft-deleted versions, so deleting a version does not
+# free its number either. Bumping is the only way to change what is published.
 #
 # Category slugs the registry recognizes:
 #   agents automation communication creative development finance
@@ -31,54 +35,54 @@
 skills:
   - slug: skill-creator
     name: Skill Creator
-    version: 1.0.0
+    version: 1.0.1
     categories: [development, agents]
     topics: [agent-skills, scaffolding, claude-code, meta]
 
   - slug: code-review
     name: Code Review
-    version: 1.0.0
+    version: 1.0.1
     categories: [development]
     topics: [code-review, pull-requests, subagents, ci]
 
   - slug: recover
     name: Recover
-    version: 1.0.0
+    version: 1.0.1
     categories: [development, operations]
     topics: [git, worktree, cleanup, claude-code]
 
   - slug: reconcile
     name: Reconcile
-    version: 1.0.0
+    version: 1.0.1
     categories: [development, operations]
     topics: [git, parallel-sessions, drift, claude-code]
 
   - slug: session-management
     name: Session Management
-    version: 1.0.0
+    version: 1.0.1
     categories: [productivity, agents]
     topics: [session-management, context, state, claude-code]
 
   - slug: ssot-check
     name: SSOT Check
-    version: 1.0.0
+    version: 1.0.1
     categories: [knowledge, development]
     topics: [documentation, drift, single-source-of-truth]
 
   - slug: eval-integrity
     name: Eval Integrity
-    version: 1.0.0
+    version: 1.0.1
     categories: [research, development]
     topics: [benchmarks, llm-eval, reproducibility]
 
   - slug: angel-diligence
     name: Angel Diligence
-    version: 1.0.0
+    version: 1.0.1
     categories: [research, finance]
     topics: [investing, due-diligence, startups]
 
   - slug: guest-circuit
     name: Guest Circuit
-    version: 1.0.0
+    version: 1.0.1
     categories: [research, creative]
     topics: [podcasting, guest-research, outreach]
