@@ -13,6 +13,11 @@ Two behaviors this exists to prevent, both read off the CLI source (v0.23.1):
   * `clawhub sync` batches but cannot set categories, so everything it ships
     lands in the `other` bucket.
 
+The --source-* flags below are passed because they are free, not because they
+work. Verified 2026-08-03: `links.source` is null for every natively published
+skill on the registry (0 of 390 sampled), and stays null after a publish that
+passes all four flags. Never gate this script, or a verification step, on them.
+
 Usage:
     python3 scripts/clawhub-sync.py --dry-run
     python3 scripts/clawhub-sync.py
@@ -88,14 +93,22 @@ def parse_manifest(path: Path) -> list[dict]:
 def published_version(slug: str) -> str | None:
     """Latest version the registry holds for slug, or None if unpublished.
 
-    Uses `clawhub skill inspect --json` rather than the search API: the search
+    Uses `clawhub inspect --json` rather than the search API: the search
     projection returns `native.version: null` and only an opaque
     `latestVersionId`, so it cannot answer this question. `inspect` returns
     `latestVersion` as a plain semver string.
+
+    The slug is owner-qualified. A bare slug resolves globally, and several of
+    these names are taken by unrelated skills — a bare `skill-creator` returns
+    someone else's listing with ~98k downloads, which would silently compare
+    our version against a stranger's and skip or republish on that basis.
+
+    Note this is top-level `inspect`, not `skill inspect`. The latter does not
+    exist in v0.23.1 and errors; it cost a live verification pass on 2026-08-03.
     """
     try:
         result = subprocess.run(
-            ["clawhub", "skill", "inspect", slug, "--json"],
+            ["clawhub", "inspect", f"@{OWNER}/{slug}", "--json"],
             capture_output=True, text=True,
         )
     except FileNotFoundError:
