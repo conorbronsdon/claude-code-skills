@@ -3,7 +3,9 @@ name: ssot-check
 description: Single-source-of-truth drift auditor for documentation-heavy repos. Use when asked to "check for drift," "find copies of this number," "audit the docs for stale facts," or "set up an SSOT manifest." Finds facts hand-copied across files, builds a manifest of canonical locations, and verifies every copy still matches.
 argument-hint: "[discover|check]"
 ---
-<!-- x-source: ssot-check/SKILL.md @ 642b5d6 -->
+<!-- Standalone prose skill. It shares a name and a problem statement with the
+     tool-backed https://github.com/conorbronsdon/ssot-check, but it is not a
+     synced copy of that repo's SKILL.md and does not track a commit there. -->
 
 # /ssot-check — Fact-Copy Drift Auditor
 
@@ -11,7 +13,9 @@ Documentation-heavy repos repeat facts. An episode count lives in a README, then
 
 It complements `/reconcile`. Reconcile catches multi-session drift in state files. This skill catches fact-copy drift across documents: the same number or string living in several files, where exactly one file is allowed to be right.
 
-**Invocation:** deliberately model-invocable — checks are read-only and belong in pre-commit moments; fixes are proposed, never auto-applied.
+**Invocation:** deliberately model-invocable — it belongs in pre-commit moments. No file is ever edited: fixes are proposed as diffs, never auto-applied. No repo being audited is ever modified — no pull, no rebase, no checkout, no commit, in this repo or a sibling.
+
+Exactly one operation writes anything at all, and it is worth stating plainly rather than burying: `git fetch` in a sibling clone, which updates that clone's remote-tracking refs and `FETCH_HEAD` so a value can be compared against a live remote. It touches no working tree and no file. It is **off by default** and runs only on an explicit request from the user in that session. Absent that request, freshness comes from refs already on disk, or the fact is reported UNVERIFIED.
 
 ## When to Use
 
@@ -86,9 +90,25 @@ Schema rules:
 
 A copy — or the canonical itself — may live in a sibling local clone (marketing pages often do). Use a relative path that escapes the repo root, like `../cot-sponsor-page/index.html`. Three rules:
 
-1. **Never mutate the sibling to check it.** Run `git -C ../cot-sponsor-page fetch` and compare against the remote ref (`git show origin/HEAD:index.html`) when freshness matters; read the working tree as-is otherwise. Report local divergence between the sibling's tree and its remote as a finding. Do not pull, rebase, or otherwise modify a repo you are only auditing — if you can't establish a fresh value read-only, report the fact as UNVERIFIED rather than guessing.
+1. **Never mutate the sibling to check it.** Read its working tree as-is. When freshness matters, compare against the remote-tracking ref the sibling *already has on disk*. Resolve that ref before using it — do not assume `origin/HEAD` exists, because it is set by `git clone` but not by `git remote add` + `git fetch`:
+
+   ```bash
+   S=../cot-sponsor-page
+   REF=$(git -C $S rev-parse --abbrev-ref '@{upstream}' 2>/dev/null) \
+     || REF=$(git -C $S for-each-ref --format='%(refname:short)' refs/remotes | head -1)
+   # No REF at all? The sibling has no remote-tracking ref. Report UNVERIFIED.
+   git -C $S show "$REF:index.html"          # the value
+   git -C $S log -1 --format=%cs "$REF"      # its as-of date
+   ```
+
+   Every command above reads local refs and makes no network call. Quote the as-of date next to the value: a remote-tracking ref is a local mirror and can lag the real remote, and a value whose as-of date you can't state is not a fresh value. Report divergence between the sibling's working tree and that ref as a finding.
+
+   Do **not** fetch, pull, rebase, checkout, or commit in a repo you are only auditing. `git fetch` is not exempt: it writes the sibling's remote-tracking refs, `FETCH_HEAD`, and packfiles, and makes an unsolicited network call on the user's behalf. `git pull` additionally moves the sibling's working tree, which can clobber uncommitted work. If you cannot establish a value read-only — no remote-tracking ref on disk, or the file is absent from it — report the fact as **UNVERIFIED** rather than guessing or fetching.
+
+   Run `git fetch` in a sibling only when the user explicitly asks for a live-remote comparison in that session. Name the repo you are about to fetch before running it, and treat the request as covering that session only.
+
 2. **Fixes to a sibling repo are a separate commit.** Propose the edit, but note it lands in the other repo with its own commit and deploy path.
-3. **A cross-repo canonical is legitimate.** When the audited repo's own docs delegate a surface to the sibling ("the media kit we send sponsors is the live page"), the sibling file is the canonical and the audited repo holds the copies. The pull-fresh rule applies doubly: a stale canonical poisons every comparison for that fact.
+3. **A cross-repo canonical is legitimate.** When the audited repo's own docs delegate a surface to the sibling ("the media kit we send sponsors is the live page"), the sibling file is the canonical and the audited repo holds the copies. The freshness rule applies doubly: a stale canonical poisons every comparison for that fact. If you cannot establish the sibling canonical's value read-only, mark the whole fact **UNVERIFIED** — do not compare its copies against a canonical you are unsure of, because every copy will then be reported wrongly in one direction or the other.
 
 **Mode selection:** if $ARGUMENTS is `discover` or `check`, run that mode. Otherwise auto-detect: `.ssot.yaml` present → check mode, absent → discover mode.
 
@@ -142,7 +162,7 @@ Goal: verify every copy still matches its canonical value. Main-thread, fast, re
 
 1. **Read `.ssot.yaml`.** If it does not exist, switch to discover mode.
 
-2. **Pull fresh any sibling repos** referenced by cross-repo copy paths (see rules above).
+2. **Establish freshness for sibling repos read-only.** For each cross-repo path in the manifest, read the sibling's working tree, and — when freshness matters — compare against the remote-tracking ref already on disk via `git show`, noting its tip date (see the cross-repo rules above). Do not fetch and do not pull — unless the user explicitly asked for a live-remote comparison this session, which is the one exception in cross-repo rule 1. If neither the working tree nor an existing remote-tracking ref yields a value you can stand behind, mark those facts **UNVERIFIED** and continue with the rest of the manifest.
 
 3. **For each fact:**
    - Open the canonical file, apply the canonical pattern, extract the captured value.
@@ -151,6 +171,7 @@ Goal: verify every copy still matches its canonical value. Main-thread, fast, re
      - Match: **IN SYNC**
      - Mismatch: **DRIFTED**. Record canonical value, copy value, and `file:line` of the copy. Before proposing the edit, check direction: if the fact is a monotonic count and the COPY is higher than the canonical, the canonical is probably the stale one — report **DRIFTED (canonical suspect)** and ask the human to confirm the live value instead of proposing an edit that would regress the copy.
      - Copy pattern does not match at all: **STALE ENTRY**. The copy was reworded or removed. Propose a manifest update.
+     - Value could not be read at all — a cross-repo path with no readable working tree and no remote-tracking ref on disk: **UNVERIFIED**. Report it and move on. Never substitute a remembered, inferred, or previously-seen value for one you could not read, and never fetch to resolve it unless the user asked (see cross-repo rule 1). An UNVERIFIED fact is a smaller problem than a confidently wrong one.
 
 4. **Report:**
 
@@ -172,10 +193,15 @@ Goal: verify every copy still matches its canonical value. Main-thread, fast, re
      nearest match: "Single episode rate: $1,500" at line 9
      proposed manifest fix: pattern: 'Single episode rate:\s*\$([\d,]+)'
 
-   8 facts checked, 1 drifted, 1 stale manifest entry.
+   UNVERIFIED (1):
+   - hero-episode-count — ../cot-sponsor-page/index.html not readable and the
+     clone has no remote-tracking ref on disk. Not compared.
+     to resolve: fetch that repo yourself, or re-run after updating the clone.
+
+   8 facts checked, 1 drifted, 1 stale manifest entry, 1 unverified.
    ```
 
-   The last line is the exit summary. Always emit it, even when everything is clean ("8 facts checked, all in sync").
+   The last line is the exit summary. Always emit it, even when everything is clean ("8 facts checked, all in sync"). Count UNVERIFIED facts separately — never fold them into "in sync", because "I could not check this" and "this matches" are opposite results.
 
 5. **Apply fixes only after approval, one fact at a time.** Show the exact diff for each edit. Drifted copies get content edits. CANONICAL MOVED and STALE ENTRY get manifest edits. Cross-repo edits are flagged as landing in the sibling repo.
 
