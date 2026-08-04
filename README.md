@@ -16,7 +16,7 @@ Production-tested agent skills. Drop-in markdown files that teach a coding agent
 ---
 
 
-These are patterns I built for my own daily work and generalized for anyone to use. They work with Claude Code out of the box, install into Codex, Cursor, and OpenCode with one flag (see [Other agents](#other-agents)), and follow the [agentskills.io](https://agentskills.io) standard where applicable.
+These are patterns I built for my own daily work and generalized for anyone to use. They work with Claude Code out of the box, install into Codex, Cursor, and OpenCode with one flag (see [Other agents](#other-agents)), and follow the [agentskills.io](https://agentskills.io) standard where applicable. The through-line is trust infrastructure for agents — mostly its proportionate-review leg: review scaled to what a mistake would cost, from a quick drift check after parallel sessions to a full adversarial multi-agent pass before a high-stakes merge.
 
 ## At a Glance
 
